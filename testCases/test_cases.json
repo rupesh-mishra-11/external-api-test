@@ -1,0 +1,471 @@
+{
+  "base_url": "http://rsync.residentportal2.residentportal.localhost:7080",
+  "test_cases": [
+    {
+      "id": "1",
+      "name": "Add Refund Account",
+      "endpoint": "/exapi/?controller=add_payment_account",
+      "method": "POST",
+      "headers": {
+        "x-client-type": "mobile_app",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "payment_type_id": 4,
+        "payment_account_id": 1332527,
+        "account_nickname": "test1",
+        "is_refundable": true
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "2",
+      "name": "Delete Refund Account",
+      "endpoint": "/exapi/?controller=delete_payment_account",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1060620,
+        "customer_id": 31626097,
+        "lease_id": 15383382,
+        "payment_account_id": 1334083
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "3",
+      "name": "Add Payment Account",
+      "endpoint": "/exapi/?controller=add_payment_account",
+      "method": "POST",
+      "headers": {
+        "x-client-type": "Test-client",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "payment_type_id": 4,
+        "is_refundable": false,
+        "account_nickname": "test12",
+        "card_info": {
+          "masked_card_number": "4457010000000008",
+          "secure_reference_number": 514634,
+          "name_on_card": "SpTest",
+          "exp_month": "02",
+          "exp_year": "2026",
+          "postal_code": "32013",
+          "nickname": "SpTes333t"
+        }
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "4",
+      "name": "Get Payment Accounts",
+      "endpoint": "/exapi/?controller=payment_accounts",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "5",
+      "name": "Get Permissions",
+      "endpoint": "/exapi/?controller=get_permissions",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "lease_id": 11225273,
+        "customer_id": 15285367,
+        "property_id": 84540
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "6",
+      "name": "Get MoneyGram Account",
+      "endpoint": "/exapi/?controller=get_moneygram_account",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "lease_id": 11225273,
+        "customer_id": 31467080,
+        "property_id": 84540,
+        "payment_account_id": 1321430
+      },
+      "category": "MoneyGram"
+    },
+    {
+      "id": "7",
+      "name": "Make Payment",
+      "endpoint": "/exapi/?controller=make_payment",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1060620,
+        "customer_id": 31626097,
+        "lease_id": 15383382,
+        "customer_payment_account_id": "1334096",
+        "description": "Master Card",
+        "agrees_to_fees": true,
+        "payment_amount": 5,
+        "agrees_to_terms": true,
+        "payment_type_id": 7,
+        "agree_to_duplicate": true,
+        "terms_accepted_on": "2025-09-01T16:46:37"
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "8",
+      "name": "Get Balance",
+      "endpoint": "/exapi/?controller=balance",
+      "method": "GET",
+      "headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      "body": {
+        "customer_id": 31951311,
+        "lease_id": 15616538,
+        "property_id": 1108954,
+        "cid": 4547
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "9",
+      "name": "Download Receipt",
+      "endpoint": "/exapi/?controller=get_payment_receipt",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31784562,
+        "lease_id": 15492910,
+        "payment_ids": "1575816881"
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "10",
+      "name": "Get Repayment Details",
+      "endpoint": "/exapi/?controller=get_repayment_details",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "lease_id": 12249734,
+        "customer_id": 15404003,
+        "property_id": 84540
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "11",
+      "name": "Get Payment History",
+      "endpoint": "/exapi/?controller=make_payment",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "lease_id": 11225273,
+        "customer_id": 15285367,
+        "description": "Test Payment from flex_id=5555555",
+        "property_id": 84540,
+        "agrees_to_fees": true,
+        "payment_amount": 1.2,
+        "agrees_to_terms": true,
+        "payment_type_id": 5,
+        "terms_accepted_on": "2025-05-12T16:46:37",
+        "customer_payment_account_id": 1217935
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "12",
+      "name": "Cancel Payment",
+      "endpoint": "/exapi/?controller=cancel_payment",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "lease_id": 15492910,
+        "customer_id": 31784562,
+        "property_id": 1108954,
+        "cancellation_reason": "testing cancel",
+        "payment_id": 1575833457
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "13",
+      "name": "Approve Split Payment",
+      "endpoint": "/exapi/?controller=approve_split_auto_payment",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 31487432,
+        "lease_id": 15280266,
+        "id": 253657,
+        "payment_account_id": 1318241,
+        "agrees_to_terms": true
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "14",
+      "name": "Get Resident Detail",
+      "endpoint": "/exapi/?controller=resident_details",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "customer_id": 15285367,
+        "lease_id": 11225273,
+        "property_id": 84540
+      },
+      "category": "Resident"
+    },
+    {
+      "id": "15",
+      "name": "Get Payment Status",
+      "endpoint": "/exapi/?controller=payment_status",
+      "method": "GET",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "payment_id": 1575716428,
+        "customer_id": 456456,
+        "lease_id": 15351934,
+        "property_id": 57711,
+        "cid": 4547
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "16",
+      "name": "Add Refund Account (ACH)",
+      "endpoint": "/exapi/?controller=add_refund_account",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 84540,
+        "customer_id": 31993262,
+        "lease_id": 15653121,
+        "payment_type_id": 4,
+        "bank_info": {
+          "name_on_account": "Flex Test Account-1",
+          "bank_name": "Testing Flex Bank-1",
+          "routing_number": "011401533",
+          "account_number": "12345678903",
+          "account_type_id": 3,
+          "nickname": "Flex"
+        }
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "17",
+      "name": "Delete Auto Payment",
+      "endpoint": "/exapi/?controller=delete_auto_payment",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31743460,
+        "lease_id": 15468624,
+        "scheduled_payment_id": 263866
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "18",
+      "name": "Get Auto Payments",
+      "endpoint": "/exapi/?controller=get_auto_payments",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31743460,
+        "lease_id": 15468624
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "19",
+      "name": "Add Auto Payment",
+      "endpoint": "/exapi/?controller=add_auto_payment",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31743460,
+        "lease_id": 15468624,
+        "payment_type_id": 4,
+        "agrees_to_terms": true,
+        "agrees_to_fees": true,
+        "agrees_to_duplicate": false,
+        "start_date": "2025-11-29",
+        "end_date": "2026-11-27",
+        "payment_account_id": 1329007,
+        "monthly": {
+          "payment_amount": "0",
+          "max_payment_amount": "0",
+          "is_variable_amount": true
+        }
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "20",
+      "name": "Get Payment Settings",
+      "endpoint": "/exapi/?controller=get_payment_settings",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "customer_id": 31784562,
+        "lease_id": 15702307,
+        "property_id": 84540
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "21",
+      "name": "Get Auto Payment Settings",
+      "endpoint": "/exapi/?controller=get_auto_payment_settings",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31743460,
+        "lease_id": 15468624
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "22",
+      "name": "Get Payment Account Settings",
+      "endpoint": "/exapi/?controller=get_auto_payment_settings",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "23",
+      "name": "MoneyGram - Get Account Details",
+      "endpoint": "/exapi/?controller=get_moneygram_account",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "customer_id": 31582173,
+        "lease_id": 15351934,
+        "property_id": 57711,
+        "payment_type_id": 6,
+        "card_info": {
+          "is_debit_card": "false",
+          "is_check_card": "false",
+          "is_gift_card": "false",
+          "is_prepaid_card": "false",
+          "is_credit_card": "false",
+          "is_international_card": "false",
+          "is_commercial_card": "false",
+          "is_fleet_card": "false",
+          "is_hsa_fsa_account": "false",
+          "is_ebt": "false",
+          "is_wic_bin": "false",
+          "is_durbin_bin_regulation": null,
+          "is_pinless_bill_pay": "false",
+          "is_pinless_pos": "false",
+          "card_type_id": 6,
+          "success": "Card number proper",
+          "nickname": "Test Resident",
+          "cvv": "123",
+          "name_on_card": "Test Resident",
+          "exp_month": "02",
+          "exp_year": "2027",
+          "postal_code": "12345",
+          "masked_card_number": "445700XXXXXX0008",
+          "secure_token": "23411e001d65c2196258c4cf12ca7194"
+        }
+      },
+      "category": "MoneyGram"
+    }
+  ]
+}

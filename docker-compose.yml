@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  api-tester:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: external-api-tester
+    ports:
+      - "5000:5000"
+    # Add extra_hosts to resolve custom .localhost domains
+    extra_hosts:
+      - "rsync.residentportal2.residentportal.localhost:host-gateway"
+    env_file:
+      - .env  # Load OAuth2 credentials from .env file
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-https://us-residentpay-external.d05d0001.entratadev.com}
+      - API_TIMEOUT=${API_TIMEOUT:-30}
+      - MAX_RETRIES=${MAX_RETRIES:-3}
+      - FLASK_ENV=${FLASK_ENV:-production}
+      - PORT=5000
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - GUNICORN_WORKERS=${GUNICORN_WORKERS:-4}
+      # OAuth2 credentials and API keys loaded from .env file
+      - TRUNK_TOKEN_URL=${TRUNK_TOKEN_URL}
+      - TRUNK_CLIENT_ID=${TRUNK_CLIENT_ID}
+      - TRUNK_CLIENT_SECRET=${TRUNK_CLIENT_SECRET}
+      - TRUNK_OAUTH_SCOPE=${TRUNK_OAUTH_SCOPE}
+      - TRUNK_API_KEY=${TRUNK_API_KEY}
+      - RAPID_PROD_TOKEN_URL=${RAPID_PROD_TOKEN_URL}
+      - RAPID_PROD_CLIENT_ID=${RAPID_PROD_CLIENT_ID}
+      - RAPID_PROD_CLIENT_SECRET=${RAPID_PROD_CLIENT_SECRET}
+      - RAPID_PROD_OAUTH_SCOPE=${RAPID_PROD_OAUTH_SCOPE}
+      - RAPID_PROD_API_KEY=${RAPID_PROD_API_KEY}
+      - STANDARD_PROD_TOKEN_URL=${STANDARD_PROD_TOKEN_URL}
+      - STANDARD_PROD_CLIENT_ID=${STANDARD_PROD_CLIENT_ID}
+      - STANDARD_PROD_CLIENT_SECRET=${STANDARD_PROD_CLIENT_SECRET}
+      - STANDARD_PROD_OAUTH_SCOPE=${STANDARD_PROD_OAUTH_SCOPE}
+      - STANDARD_PROD_API_KEY=${STANDARD_PROD_API_KEY}
+      - RAPID_STAGE_TOKEN_URL=${RAPID_STAGE_TOKEN_URL}
+      - RAPID_STAGE_CLIENT_ID=${RAPID_STAGE_CLIENT_ID}
+      - RAPID_STAGE_CLIENT_SECRET=${RAPID_STAGE_CLIENT_SECRET}
+      - RAPID_STAGE_OAUTH_SCOPE=${RAPID_STAGE_OAUTH_SCOPE}
+      - RAPID_STAGE_API_KEY=${RAPID_STAGE_API_KEY}
+      - STANDARD_STAGE_TOKEN_URL=${STANDARD_STAGE_TOKEN_URL}
+      - STANDARD_STAGE_CLIENT_ID=${STANDARD_STAGE_CLIENT_ID}
+      - STANDARD_STAGE_CLIENT_SECRET=${STANDARD_STAGE_CLIENT_SECRET}
+      - STANDARD_STAGE_OAUTH_SCOPE=${STANDARD_STAGE_OAUTH_SCOPE}
+      - STANDARD_STAGE_API_KEY=${STANDARD_STAGE_API_KEY}
+      - EXTERNAL_LOCAL_TOKEN_URL=${EXTERNAL_LOCAL_TOKEN_URL}
+      - EXTERNAL_LOCAL_CLIENT_ID=${EXTERNAL_LOCAL_CLIENT_ID}
+      - EXTERNAL_LOCAL_CLIENT_SECRET=${EXTERNAL_LOCAL_CLIENT_SECRET}
+      - EXTERNAL_LOCAL_OAUTH_SCOPE=${EXTERNAL_LOCAL_OAUTH_SCOPE}
+      - EXTERNAL_LOCAL_API_KEY=${EXTERNAL_LOCAL_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - api-tester-network
+
+networks:
+  api-tester-network:
+    driver: bridge
+

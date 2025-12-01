@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: api-tester-config
+  labels:
+    app: external-api-tester
+data:
+  api_base_url: "https://us-residentpay-external.d05d0001.entratadev.com"
+  api_timeout: "30"
+  max_retries: "3"
+

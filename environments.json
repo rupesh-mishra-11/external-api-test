@@ -1,0 +1,48 @@
+{
+  "environments": [
+    {
+      "id": "capricorn-trunk",
+      "name": "Capricorn Trunk",
+      "base_url": "https://us-residentpay-external.d05d0001.entratadev.com",
+      "test_cases_file": "testCases/test_cases_capricorn.json",
+      "description": "Trunk API endpoints"
+    },
+    {
+      "id": "rapid-prod",
+      "name": "Capricorn Rapid Production",
+      "base_url": "https://us-residentpay-external.entrata.com",
+      "test_cases_file": "testCases/test_cases_rapid_prod.json",
+      "description": "Rapid Production environment"
+    },
+    {
+      "id": "standard-prod",
+      "name": "Capricorn Standard Production",
+      "base_url": "https://us-residentpay-external.entrata.com",
+      "test_cases_file": "testCases/test_cases_standard_prod.json",
+      "description": "Standard Production environment"
+    },
+    {
+      "id": "rapid-stage",
+      "name": "Capricorn Rapid Stage",
+      "base_url": "https://us-residentpay-external.s01a0001.entratastage.com",
+      "test_cases_file": "testCases/test_cases_rapid_stage.json",
+      "description": "Rapid Stage environment"
+    },
+    {
+      "id": "standard-stage",
+      "name": "Capricorn Standard Stage",
+      "base_url": "https://us-residentpay-external.s01a0001.entratastage.com",
+      "test_cases_file": "testCases/test_cases_standard_stage.json",
+      "description": "Standard Stage environment"
+    },
+    {
+      "id": "external-local",
+      "name": "External API Local",
+      "base_url": "http://rsync.residentportal2.residentportal.localhost:7080",
+      "test_cases_file": "testCases/test_cases.json",
+      "description": "Local development environment"
+    }
+  ],
+  "default_environment": "capricorn-trunk"
+}
+

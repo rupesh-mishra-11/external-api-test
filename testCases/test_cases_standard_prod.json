@@ -1,0 +1,106 @@
+{
+  "base_url": "https://us-residentpay-external.entrata.com",
+  "test_cases": [
+    {
+      "id": "sp_1",
+      "name": "Add Payment Account",
+      "endpoint": "/addPaymentAccount",
+      "method": "PUT",
+      "headers": {
+        "x-client-type": "mobile",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 84540,
+        "customer_id": 32089719,
+        "lease_id": 15723637,
+        "payment_type_id": 4,
+        "is_refundable": false,
+        "account_nickname": "test12",
+        "bank_info": {
+          "name_on_account": "Plaid Saving255",
+          "bank_name": "SunTrust2",
+          "routing_number": "324377820",
+          "nickname": "test5",
+          "account_number": "1234567890",
+          "account_type_id": 4
+        }
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "sp_2",
+      "name": "Get Payment Accounts",
+      "endpoint": "/getPaymentAccounts",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 84540,
+        "customer_id": 32089719,
+        "lease_id": 15723637
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "sp_3",
+      "name": "Get Permissions",
+      "endpoint": "/settings/getPermissions",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 84540,
+        "customer_id": 32089719,
+        "lease_id": 15723637
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "sp_4",
+      "name": "Make Payment",
+      "endpoint": "/makePayment",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 84540,
+        "customer_id": 32089719,
+        "lease_id": 15723637,
+        "customer_payment_account_id": "1329007",
+        "description": "VISA",
+        "agrees_to_fees": true,
+        "payment_amount": 4,
+        "agrees_to_terms": true,
+        "payment_type_id": 5,
+        "agree_to_duplicate": true,
+        "terms_accepted_on": "2025-09-01T16:46:37"
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "sp_5",
+      "name": "Get Payment Types",
+      "endpoint": "/getPaymentTypes",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 84540,
+        "customer_id": 32089719,
+        "lease_id": 15723637,
+        "payment_amount": 100
+      },
+      "category": "Settings"
+    }
+  ]
+}

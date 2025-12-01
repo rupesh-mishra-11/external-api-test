@@ -1,0 +1,411 @@
+{
+  "base_url": "https://us-residentpay-external.d05d0001.entratadev.com",
+  "test_cases": [
+    {
+      "id": "cap_1",
+      "name": "Add Payment Account",
+      "endpoint": "/addPaymentAccount",
+      "method": "PUT",
+      "headers": {
+        "x-client-type": "mobile",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "payment_type_id": 5,
+        "is_refundable": false,
+        "account_nickname": "Prepaid",
+        "card_info": {
+          "masked_card_number": "5112010201000109",
+          "secure_reference_number": 531027,
+          "name_on_card": "Prepaid",
+          "exp_month": "02",
+          "exp_year": "2026",
+          "postal_code": "32013",
+          "nickname": "Prepaid & debit"
+        }
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "cap_2",
+      "name": "Get Payment Accounts",
+      "endpoint": "/getPaymentAccounts",
+      "method": "POST",
+      "headers": {
+        "x-client-type": "Test-client",
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "cap_3",
+      "name": "Delete Payment Account",
+      "endpoint": "/deletePaymentAccount",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "payment_account_id": 1327749
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "cap_4",
+      "name": "Get Permissions",
+      "endpoint": "/settings/getPermissions",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "cap_5",
+      "name": "Add Auto Payment",
+      "endpoint": "/autopayments/addAutoPayment",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31743460,
+        "lease_id": 15468624,
+        "payment_type_id": 4,
+        "agrees_to_terms": true,
+        "agrees_to_fees": true,
+        "agrees_to_duplicate": false,
+        "start_date": "2025-11-29",
+        "end_date": "2026-11-27",
+        "payment_account_id": 1329007,
+        "monthly": {
+          "payment_amount": "0",
+          "max_payment_amount": "0",
+          "is_variable_amount": true
+        }
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "cap_6",
+      "name": "Delete Auto Payment",
+      "endpoint": "/autopayments/deleteAutoPayment",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31743460,
+        "lease_id": 15468624,
+        "scheduled_payment_id": 263866
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "cap_7",
+      "name": "Get Auto Payments",
+      "endpoint": "/autopayments/getAutoPayments",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31743460,
+        "lease_id": 15468624
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "cap_8",
+      "name": "Make Payment",
+      "endpoint": "/makePayment",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31743460,
+        "lease_id": 15468624,
+        "customer_payment_account_id": "1329007",
+        "description": "VISA",
+        "agrees_to_fees": true,
+        "payment_amount": 4,
+        "agrees_to_terms": true,
+        "payment_type_id": 5,
+        "agree_to_duplicate": true,
+        "terms_accepted_on": "2025-09-01T16:46:37"
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "cap_9",
+      "name": "Cancel Payment",
+      "endpoint": "/cancelPayment",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "payment_ids": 1575816216,
+        "cancellation_reason": "testing cancel"
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "cap_10",
+      "name": "Get Payment Types",
+      "endpoint": "/getPaymentTypes",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "payment_amount": 100
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "cap_11",
+      "name": "Get Payment History",
+      "endpoint": "/getPaymentHistory",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "cap_12",
+      "name": "Link Bank Account",
+      "endpoint": "/linkBankAccount",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "public_token": "public-sandbox-example-token"
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "cap_13",
+      "name": "Get Balance Detail",
+      "endpoint": "/getBalanceDetail",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "cap_14",
+      "name": "Get Payment Receipt",
+      "endpoint": "/getPaymentReceipt",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31784562,
+        "lease_id": 15492910,
+        "payment_ids": "1575816881"
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "cap_15",
+      "name": "Get Payment Status",
+      "endpoint": "/getPaymentStatus",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "payment_id": 1575716428
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "cap_16",
+      "name": "Get Payment Settings",
+      "endpoint": "/settings/getPaymentSettings",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "cap_17",
+      "name": "Get Payment Account Settings",
+      "endpoint": "/settings/getPaymentAccountSettings",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "cap_18",
+      "name": "Get Auto Payment Settings",
+      "endpoint": "/settings/getAutoPaymentSettings",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1108954,
+        "customer_id": 31743460,
+        "lease_id": 15468624
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "cap_19",
+      "name": "Get Repayment Details",
+      "endpoint": "/getRepaymentDetails",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "cap_20",
+      "name": "MoneyGram - Get Account",
+      "endpoint": "/moneygram/getAccount",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "payment_account_id": 1332527
+      },
+      "category": "MoneyGram"
+    },
+    {
+      "id": "cap_21",
+      "name": "MoneyGram - Get Instruction",
+      "endpoint": "/moneygram/getInstruction",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "payment_account_id": 1332527
+      },
+      "category": "MoneyGram"
+    },
+    {
+      "id": "cap_22",
+      "name": "MoneyGram - Add Account",
+      "endpoint": "/moneygram/addAccount",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32133978,
+        "lease_id": 15794529,
+        "payment_type_id": 6,
+        "card_info": {
+          "masked_card_number": "445700XXXXXX0008",
+          "secure_token": "23411e001d65c2196258c4cf12ca7194",
+          "name_on_card": "Test Resident",
+          "exp_month": "02",
+          "exp_year": "2027",
+          "postal_code": "12345",
+          "nickname": "Test Resident"
+        }
+      },
+      "category": "MoneyGram"
+    }
+  ]
+}

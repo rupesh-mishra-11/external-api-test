@@ -1,0 +1,28 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: external-api-tester-ingress
+  labels:
+    app: external-api-tester
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: api-tester.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: external-api-tester-service
+            port:
+              number: 80
+  # Uncomment and configure for TLS
+  # tls:
+  # - hosts:
+  #   - api-tester.example.com
+  #   secretName: api-tester-tls
+
