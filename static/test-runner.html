@@ -347,8 +347,8 @@
         }
 
         .test-details {
-            margin-top: 15px;
-            padding: 12px;
+            margin-top: 5px;
+            padding: 0px 0px 20px;
             background: #f9fafb;
             border-radius: 8px;
             font-size: 12px;
@@ -611,6 +611,196 @@
             
             const methodClass = `badge-${testCase.method.toLowerCase()}`;
             
+            // Build request bodies display - unified format for both single and multiple
+            let bodiesDisplay = '';
+            const hasMultipleBodies = testCase.bodies && Array.isArray(testCase.bodies) && testCase.bodies.length > 0;
+            
+            if (hasMultipleBodies) {
+                testCase.bodies.forEach((bodyConfig, idx) => {
+                    const scenarioName = bodyConfig.name || `Scenario ${idx + 1}`;
+                    const body = bodyConfig.body || bodyConfig;
+                    bodiesDisplay += `<div style="margin-bottom: 15px; padding: 10px; background: #f9fafb; border-radius: 6px; border-left: 3px solid #667eea;">
+                        <strong>${scenarioName}:</strong>
+                        <pre style="margin-top: 5px;">${JSON.stringify(body, null, 2)}</pre>
+                    </div>`;
+                });
+            } else {
+                // Single body - display as Scenario 1 for consistency
+                bodiesDisplay = `<div style="margin-bottom: 15px; padding: 10px; background: #f9fafb; border-radius: 6px; border-left: 3px solid #667eea;">
+                    <strong>Scenario 1:</strong>
+                    <pre style="margin-top: 5px;">${JSON.stringify(testCase.body || {}, null, 2)}</pre>
+                </div>`;
+            }
+            
+            // Check if this is a Delete Payment Account test case
+            const isDeletePaymentAccount = testCase.name && testCase.name.toLowerCase().includes('delete payment account');
+            const paymentAccountIdsInput = isDeletePaymentAccount ? `
+                <div style="margin-top: 10px; margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 5px;">
+                        Payment Account IDs (comma-separated):
+                    </label>
+                    <input 
+                        type="text" 
+                        id="payment-account-ids-${testCase.id}" 
+                        placeholder="e.g., 1334083, 1334084, 1334085"
+                        style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: monospace;"
+                    />
+                    <small style="display: block; margin-top: 4px; color: #6b7280; font-size: 11px;">
+                        Leave empty to use default ID from test case
+                    </small>
+                </div>
+            ` : '';
+            
+            // Check if this is a Delete Auto Payment test case
+            const isDeleteAutoPayment = testCase.name && testCase.name.toLowerCase().includes('delete auto payment');
+            const scheduledPaymentIdsInput = isDeleteAutoPayment ? `
+                <div style="margin-top: 10px; margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 5px;">
+                        Scheduled Payment IDs (comma-separated):
+                    </label>
+                    <input 
+                        type="text" 
+                        id="scheduled-payment-ids-${testCase.id}" 
+                        placeholder="e.g., 263866, 263867, 263868"
+                        style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: monospace;"
+                    />
+                    <small style="display: block; margin-top: 4px; color: #6b7280; font-size: 11px;">
+                        Leave empty to use default ID from test case
+                    </small>
+                </div>
+            ` : '';
+            
+            // Check if this is an Add Auto Payment test case
+            const isAddAutoPayment = testCase.name && testCase.name.toLowerCase().includes('add auto payment');
+            const addAutoPaymentInputs = isAddAutoPayment ? `
+                <div style="margin-top: 10px; margin-bottom: 10px; padding: 12px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 8px;">
+                        Auto Payment Configuration:
+                    </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <div>
+                            <label style="display: block; font-size: 11px; font-weight: 500; color: #6b7280; margin-bottom: 4px;">
+                                Payment Account ID:
+                            </label>
+                            <input 
+                                type="text" 
+                                id="auto-payment-account-id-${testCase.id}" 
+                                placeholder="e.g., 1329007"
+                                style="width: 100%; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px; font-family: monospace;"
+                            />
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 11px; font-weight: 500; color: #6b7280; margin-bottom: 4px;">
+                                Payment Type ID:
+                            </label>
+                            <input 
+                                type="text" 
+                                id="auto-payment-type-id-${testCase.id}" 
+                                placeholder="e.g., 4"
+                                style="width: 100%; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px; font-family: monospace;"
+                            />
+                        </div>
+                    </div>
+                    <small style="display: block; margin-top: 4px; color: #6b7280; font-size: 11px;">
+                        Leave empty to use default values. Dates will be auto-calculated (start: next month 1st, end: 2 months later 1st)
+                    </small>
+                </div>
+            ` : '';
+            
+            // Check if this is a Make Payment test case
+            const isMakePayment = testCase.name && testCase.name.toLowerCase().includes('make payment');
+            const makePaymentInputs = isMakePayment ? `
+                <div style="margin-top: 10px; margin-bottom: 10px; padding: 12px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 8px;">
+                        Payment Configuration:
+                    </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label style="display: block; font-size: 11px; font-weight: 500; color: #6b7280; margin-bottom: 4px;">
+                                Customer Payment Account ID:
+                            </label>
+                            <input 
+                                type="text" 
+                                id="make-payment-account-id-${testCase.id}" 
+                                placeholder="e.g., 1334096"
+                                style="width: 100%; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px; font-family: monospace;"
+                            />
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 11px; font-weight: 500; color: #6b7280; margin-bottom: 4px;">
+                                Payment Type ID:
+                            </label>
+                            <input 
+                                type="text" 
+                                id="make-payment-type-id-${testCase.id}" 
+                                placeholder="e.g., 7"
+                                style="width: 100%; padding: 6px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 12px; font-family: monospace;"
+                            />
+                        </div>
+                    </div>
+                    <small style="display: block; margin-top: 4px; color: #6b7280; font-size: 11px;">
+                        Leave empty to use default values from test case
+                    </small>
+                </div>
+            ` : '';
+            
+            // Check if this is a Cancel Payment test case
+            const isCancelPayment = testCase.name && testCase.name.toLowerCase().includes('cancel payment');
+            const cancelPaymentInputs = isCancelPayment ? `
+                <div style="margin-top: 10px; margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 5px;">
+                        Payment IDs (comma-separated):
+                    </label>
+                    <input 
+                        type="text" 
+                        id="cancel-payment-ids-${testCase.id}" 
+                        placeholder="e.g., 1575833457, 1575833458, 1575833459"
+                        style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: monospace;"
+                    />
+                    <small style="display: block; margin-top: 4px; color: #6b7280; font-size: 11px;">
+                        Leave empty to use default ID from test case
+                    </small>
+                </div>
+            ` : '';
+            
+            // Check if this is a Get Payment Receipt or Download Receipt test case
+            const isGetPaymentReceipt = testCase.name && (testCase.name.toLowerCase().includes('get payment receipt') || testCase.name.toLowerCase().includes('download receipt'));
+            const getPaymentReceiptInputs = isGetPaymentReceipt ? `
+                <div style="margin-top: 10px; margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 5px;">
+                        Payment IDs (string):
+                    </label>
+                    <input 
+                        type="text" 
+                        id="receipt-payment-ids-${testCase.id}" 
+                        placeholder="e.g., 1575816881"
+                        style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: monospace;"
+                    />
+                    <small style="display: block; margin-top: 4px; color: #6b7280; font-size: 11px;">
+                        Leave empty to use default ID from test case
+                    </small>
+                </div>
+            ` : '';
+            
+            // Check if this is a Get Payment Status test case
+            const isGetPaymentStatus = testCase.name && testCase.name.toLowerCase().includes('get payment status');
+            const getPaymentStatusInputs = isGetPaymentStatus ? `
+                <div style="margin-top: 10px; margin-bottom: 10px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; color: #374151; margin-bottom: 5px;">
+                        Payment ID:
+                    </label>
+                    <input 
+                        type="text" 
+                        id="payment-status-id-${testCase.id}" 
+                        placeholder="e.g., 1575716428"
+                        style="width: 100%; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; font-family: monospace;"
+                    />
+                    <small style="display: block; margin-top: 4px; color: #6b7280; font-size: 11px;">
+                        Leave empty to use default ID from test case
+                    </small>
+                </div>
+            ` : '';
+            
             card.innerHTML = `
                 <div class="test-header">
                     <div class="test-title">${testCase.name}</div>
@@ -622,14 +812,21 @@
                 <div class="test-status pending" id="status-${testCase.id}">
                     Ready to run
                 </div>
+                ${paymentAccountIdsInput}
+                ${scheduledPaymentIdsInput}
+                ${addAutoPaymentInputs}
+                ${makePaymentInputs}
+                ${cancelPaymentInputs}
+                ${getPaymentReceiptInputs}
+                ${getPaymentStatusInputs}
                 <button class="btn btn-primary" style="width: 100%; margin-top: 15px;" onclick="runSingleTest('${testCase.id}')">
                     ▶ Run Test
                 </button>
                 <button class="toggle-details" onclick="toggleDetails('${testCase.id}')">Show Details</button>
                 <div class="test-details" id="details-${testCase.id}">
                     <strong>Endpoint:</strong> ${testCase.endpoint}<br>
-                    <strong>Request Body:</strong>
-                    <pre>${JSON.stringify(testCase.body, null, 2)}</pre>
+                    <strong>Request Bodies:</strong>
+                    ${bodiesDisplay}
                     <div id="response-${testCase.id}"></div>
                 </div>
             `;
@@ -637,38 +834,59 @@
             return card;
         }
 
-        async function runSingleTest(testId) {
-            const card = document.getElementById(`test-${testId}`);
-            const status = document.getElementById(`status-${testId}`);
+        function renderSingleResult(result, responseDiv) {
+            const requestBodyHtml = result.request_body ? `
+                <strong style="display: block; margin-top: 10px;">Request Body:</strong>
+                <pre style="margin-top: 5px; background: white; padding: 10px; border-radius: 4px; font-size: 11px;">${JSON.stringify(result.request_body, null, 2)}</pre>
+            ` : '';
             
-            card.className = 'test-card running';
-            status.className = 'test-status running';
-            status.innerHTML = '<div class="spinner"></div> Running test...';
+            // Check if this is a Get Payment Receipt response with binary data
+            const isReceiptResponse = result.test_name && (
+                result.test_name.toLowerCase().includes('get payment receipt') || 
+                result.test_name.toLowerCase().includes('download receipt')
+            );
+            const isBinaryResponse = result.response_data_type === 'binary' || 
+                (result.content_type && (result.content_type.includes('pdf') || result.content_type.includes('zip') || result.content_type.includes('octet-stream')));
             
-            try {
-                const response = await fetch(`/api/run-test/${testId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        environment: currentEnvironment
-                    })
-                });
-                const result = await response.json();
+            // Generate download button for receipt responses
+            let downloadButtonHtml = '';
+            if (isReceiptResponse && result.success && isBinaryResponse) {
+                const contentType = result.content_type || '';
+                let fileExtension = 'pdf';
+                let fileType = 'PDF';
                 
-                testResults[testId] = result;
+                if (contentType.includes('zip') || contentType.includes('application/zip')) {
+                    fileExtension = 'zip';
+                    fileType = 'ZIP';
+                } else if (contentType.includes('pdf') || contentType.includes('application/pdf')) {
+                    fileExtension = 'pdf';
+                    fileType = 'PDF';
+                }
                 
-                if (result.blocked) {
-                    // Production safety block
-                    card.className = 'test-card blocked';
-                    status.className = 'test-status blocked';
-                    status.innerHTML = `🔴 BLOCKED - ${result.error}`;
-                    
-                    const responseDiv = document.getElementById(`response-${testId}`);
-                    responseDiv.innerHTML = `
+                const downloadId = `download-${result.test_id}-${Date.now()}`;
+                // Store base64 data in a data attribute to avoid issues with special characters in onclick
+                downloadButtonHtml = `
+                    <div style="margin-top: 10px;">
+                        <button 
+                            id="${downloadId}"
+                            data-base64="${result.response_data.replace(/"/g, '&quot;')}"
+                            data-extension="${fileExtension}"
+                            data-type="${fileType}"
+                            onclick="downloadReceiptFileFromButton(this)"
+                            style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;"
+                        >
+                            📥 Download ${fileType}
+                        </button>
+                    </div>
+                `;
+            }
+            
+            if (result.blocked) {
+                return `
+                    <div style="margin-top: 15px; padding: 12px; background: #ffe5e5; border-left: 4px solid #d50009; border-radius: 6px;">
                         <strong style="color: #d50009;">🛡️ Production Safety Block:</strong>
-                        <pre style="color: #d50009; font-weight: bold;">${result.error}</pre>
+                        <pre style="color: #d50009; font-weight: bold; margin-top: 5px;">${result.error}</pre>
+                        ${requestBodyHtml}
                         <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #d50009; border-radius: 4px;">
                             <strong>ℹ️ Allowed Production CIDs:</strong>
                             <ul style="margin: 5px 0; padding-left: 20px;">
@@ -679,31 +897,236 @@
                                 Use one of these CID values in your test request body to run tests in production environments.
                             </p>
                         </div>
-                    `;
-                } else if (result.success) {
+                    </div>
+                `;
+            } else if (result.success) {
+                // For binary responses, don't show the raw data
+                const responseDisplay = isBinaryResponse 
+                    ? `<div style="margin-top: 5px; padding: 10px; background: #f3f4f6; border-radius: 4px; font-size: 11px; color: #6b7280;">
+                        Binary file received (${result.content_type || 'unknown type'})
+                    </div>`
+                    : `<pre style="margin-top: 5px; background: white; padding: 10px; border-radius: 4px; font-size: 11px;">${JSON.stringify(result.response_data, null, 2)}</pre>`;
+                
+                return `
+                    <div style="margin-top: 15px; padding: 12px; background: #d1fae5; border-left: 4px solid #10b981; border-radius: 6px;">
+                        <strong style="color: #065f46;">✅ Passed (${result.response_time_ms}ms) - Status: ${result.status_code}</strong>
+                        ${requestBodyHtml}
+                        <strong style="display: block; margin-top: 10px;">Response:</strong>
+                        ${responseDisplay}
+                        ${downloadButtonHtml}
+                    </div>
+                `;
+            } else {
+                return `
+                    <div style="margin-top: 15px; padding: 12px; background: #fee2e2; border-left: 4px solid #ef4444; border-radius: 6px;">
+                        <strong style="color: #991b1b;">❌ Failed - ${result.error || 'Status: ' + result.status_code}</strong>
+                        ${requestBodyHtml}
+                        <strong style="display: block; margin-top: 10px;">Response:</strong>
+                        <pre style="margin-top: 5px; background: white; padding: 10px; border-radius: 4px; font-size: 11px;">${JSON.stringify(result.response_data || result.error, null, 2)}</pre>
+                    </div>
+                `;
+            }
+        }
+        
+        function downloadReceiptFileFromButton(button) {
+            try {
+                const base64Data = button.getAttribute('data-base64');
+                const fileExtension = button.getAttribute('data-extension') || 'pdf';
+                const fileType = button.getAttribute('data-type') || 'PDF';
+                
+                if (!base64Data) {
+                    alert('No file data available');
+                    return;
+                }
+                
+                // Decode base64 data
+                const binaryString = atob(base64Data);
+                const bytes = new Uint8Array(binaryString.length);
+                for (let i = 0; i < binaryString.length; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                
+                // Create blob
+                const blob = new Blob([bytes], { 
+                    type: fileExtension === 'pdf' ? 'application/pdf' : 'application/zip' 
+                });
+                
+                // Create download link
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `payment_receipt_${Date.now()}.${fileExtension}`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
+                // Update button to show success
+                const originalText = button.innerHTML;
+                button.innerHTML = '✅ Downloaded';
+                button.style.background = '#10b981';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = '#667eea';
+                }, 2000);
+            } catch (error) {
+                alert('Error downloading file: ' + error.message);
+            }
+        }
+
+        async function runSingleTest(testId) {
+            const card = document.getElementById(`test-${testId}`);
+            const status = document.getElementById(`status-${testId}`);
+            
+            card.className = 'test-card running';
+            status.className = 'test-status running';
+            status.innerHTML = '<div class="spinner"></div> Running test...';
+            
+            // Check if there's a payment account IDs input for Delete Payment Account
+            const paymentAccountIdsInput = document.getElementById(`payment-account-ids-${testId}`);
+            const paymentAccountIds = paymentAccountIdsInput ? paymentAccountIdsInput.value.trim() : '';
+            
+            // Check if there's a scheduled payment IDs input for Delete Auto Payment
+            const scheduledPaymentIdsInput = document.getElementById(`scheduled-payment-ids-${testId}`);
+            const scheduledPaymentIds = scheduledPaymentIdsInput ? scheduledPaymentIdsInput.value.trim() : '';
+            
+            // Check if there are Add Auto Payment inputs
+            const autoPaymentAccountIdInput = document.getElementById(`auto-payment-account-id-${testId}`);
+            const autoPaymentAccountId = autoPaymentAccountIdInput ? autoPaymentAccountIdInput.value.trim() : '';
+            const autoPaymentTypeIdInput = document.getElementById(`auto-payment-type-id-${testId}`);
+            const autoPaymentTypeId = autoPaymentTypeIdInput ? autoPaymentTypeIdInput.value.trim() : '';
+            
+            // Check if there are Make Payment inputs
+            const makePaymentAccountIdInput = document.getElementById(`make-payment-account-id-${testId}`);
+            const makePaymentAccountId = makePaymentAccountIdInput ? makePaymentAccountIdInput.value.trim() : '';
+            const makePaymentTypeIdInput = document.getElementById(`make-payment-type-id-${testId}`);
+            const makePaymentTypeId = makePaymentTypeIdInput ? makePaymentTypeIdInput.value.trim() : '';
+            
+            // Check if there's a cancel payment IDs input for Cancel Payment
+            const cancelPaymentIdsInput = document.getElementById(`cancel-payment-ids-${testId}`);
+            const cancelPaymentIds = cancelPaymentIdsInput ? cancelPaymentIdsInput.value.trim() : '';
+            
+            // Check if there's a receipt payment IDs input for Get Payment Receipt
+            const receiptPaymentIdsInput = document.getElementById(`receipt-payment-ids-${testId}`);
+            const receiptPaymentIds = receiptPaymentIdsInput ? receiptPaymentIdsInput.value.trim() : '';
+            
+            // Check if there's a payment status ID input for Get Payment Status
+            const paymentStatusIdInput = document.getElementById(`payment-status-id-${testId}`);
+            const paymentStatusId = paymentStatusIdInput ? paymentStatusIdInput.value.trim() : '';
+            
+            try {
+                const requestBody = {
+                    environment: currentEnvironment
+                };
+                
+                // Add payment account IDs if provided
+                if (paymentAccountIds) {
+                    requestBody.payment_account_ids = paymentAccountIds;
+                }
+                
+                // Add scheduled payment IDs if provided
+                if (scheduledPaymentIds) {
+                    requestBody.scheduled_payment_ids = scheduledPaymentIds;
+                }
+                
+                // Add auto payment configuration if provided
+                if (autoPaymentAccountId || autoPaymentTypeId) {
+                    requestBody.auto_payment_config = {};
+                    if (autoPaymentAccountId) {
+                        requestBody.auto_payment_config.payment_account_id = autoPaymentAccountId;
+                    }
+                    if (autoPaymentTypeId) {
+                        requestBody.auto_payment_config.payment_type_id = autoPaymentTypeId;
+                    }
+                }
+                
+                // Add make payment configuration if provided
+                if (makePaymentAccountId || makePaymentTypeId) {
+                    requestBody.make_payment_config = {};
+                    if (makePaymentAccountId) {
+                        requestBody.make_payment_config.customer_payment_account_id = makePaymentAccountId;
+                    }
+                    if (makePaymentTypeId) {
+                        requestBody.make_payment_config.payment_type_id = makePaymentTypeId;
+                    }
+                }
+                
+                // Add cancel payment IDs if provided
+                if (cancelPaymentIds) {
+                    requestBody.cancel_payment_ids = cancelPaymentIds;
+                }
+                
+                // Add receipt payment IDs if provided
+                if (receiptPaymentIds) {
+                    requestBody.receipt_payment_ids = receiptPaymentIds;
+                }
+                
+                // Add payment status ID if provided
+                if (paymentStatusId) {
+                    requestBody.payment_status_id = paymentStatusId;
+                }
+                
+                const response = await fetch(`/api/run-test/${testId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+                const result = await response.json();
+                
+                const responseDiv = document.getElementById(`response-${testId}`);
+                
+                // Unified handling: always treat as array of results
+                let resultsArray = [];
+                if (result.has_multiple_scenarios && result.results) {
+                    // Multiple scenarios
+                    testResults[testId] = result;
+                    resultsArray = result.results;
+                } else {
+                    // Single scenario - wrap in array for unified display
+                    testResults[testId] = result;
+                    resultsArray = [result];
+                }
+                
+                // Calculate summary
+                const passed = resultsArray.filter(r => r.success && !r.blocked).length;
+                const failed = resultsArray.filter(r => !r.success && !r.blocked).length;
+                const blocked = resultsArray.filter(r => r.blocked).length;
+                const total = resultsArray.length;
+                
+                // Determine overall status
+                if (blocked > 0) {
+                    card.className = 'test-card blocked';
+                    status.className = 'test-status blocked';
+                    status.innerHTML = `🔴 ${blocked} Blocked, ${passed} Passed, ${failed} Failed`;
+                } else if (failed === 0 && total > 0) {
                     card.className = 'test-card passed';
                     status.className = 'test-status passed';
-                    status.innerHTML = `✅ Passed (${result.response_time_ms}ms) - Status: ${result.status_code}`;
-                    
-                    const responseDiv = document.getElementById(`response-${testId}`);
-                    if (responseDiv) {
-                        responseDiv.innerHTML = `
-                            <strong>Response:</strong>
-                            <pre>${JSON.stringify(result.response_data, null, 2)}</pre>
-                        `;
-                    }
+                    status.innerHTML = `✅ All ${passed} scenario${passed !== 1 ? 's' : ''} passed`;
+                } else if (passed === 0) {
+                    card.className = 'test-card failed';
+                    status.className = 'test-status failed';
+                    status.innerHTML = `❌ All ${failed} scenario${failed !== 1 ? 's' : ''} failed`;
                 } else {
                     card.className = 'test-card failed';
                     status.className = 'test-status failed';
-                    status.innerHTML = `❌ Failed - ${result.error || 'Status: ' + result.status_code}`;
-                    
-                    const responseDiv = document.getElementById(`response-${testId}`);
-                    if (responseDiv) {
-                        responseDiv.innerHTML = `
-                            <strong>Response:</strong>
-                            <pre>${JSON.stringify(result.response_data || result.error, null, 2)}</pre>
-                        `;
-                    }
+                    status.innerHTML = `⚠️ ${passed} Passed, ${failed} Failed`;
+                }
+                
+                // Render all scenario results in unified format
+                let scenariosHtml = '<div style="margin-top: 15px;"><strong>Scenario Results:</strong>';
+                resultsArray.forEach((scenarioResult, idx) => {
+                    const scenarioName = scenarioResult.scenario_name || `Scenario ${idx + 1}`;
+                    scenariosHtml += `<div style="margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
+                        <strong style="font-size: 13px; color: #667eea;">${scenarioName}</strong>
+                        ${renderSingleResult(scenarioResult, null)}
+                    </div>`;
+                });
+                scenariosHtml += '</div>';
+                
+                if (responseDiv) {
+                    responseDiv.innerHTML = scenariosHtml;
                 }
                 
                 updateSummary();
@@ -744,59 +1167,86 @@
                 });
                 const data = await response.json();
                 
-                // Update each test card with results
+                // Group results by test_id to handle multiple scenarios
+                const resultsByTest = {};
                 data.results.forEach(result => {
-                    const card = document.getElementById(`test-${result.test_id}`);
-                    const status = document.getElementById(`status-${result.test_id}`);
-                    const responseDiv = document.getElementById(`response-${result.test_id}`);
+                    if (!resultsByTest[result.test_id]) {
+                        resultsByTest[result.test_id] = [];
+                    }
+                    resultsByTest[result.test_id].push(result);
+                });
+                
+                // Update each test card with results
+                Object.keys(resultsByTest).forEach(testId => {
+                    const results = resultsByTest[testId];
+                    const card = document.getElementById(`test-${testId}`);
+                    const status = document.getElementById(`status-${testId}`);
+                    const responseDiv = document.getElementById(`response-${testId}`);
                     
-                    // Always store results (even for filtered out tests)
-                    testResults[result.test_id] = result;
+                    // Store results (use first result for backward compatibility, or create grouped result)
+                    if (results.length === 1) {
+                        testResults[testId] = results[0];
+                    } else {
+                        // Multiple scenarios - create grouped result
+                        const passed = results.filter(r => r.success && !r.blocked).length;
+                        const failed = results.filter(r => !r.success && !r.blocked).length;
+                        const blocked = results.filter(r => r.blocked).length;
+                        testResults[testId] = {
+                            test_id: testId,
+                            test_name: results[0].test_name,
+                            has_multiple_scenarios: true,
+                            results: results,
+                            summary: {
+                                total: results.length,
+                                passed: passed,
+                                failed: failed,
+                                blocked: blocked
+                            }
+                        };
+                    }
                     
                     // Skip updating DOM if elements don't exist (filtered out)
                     if (!card || !status || !responseDiv) {
                         return;
                     }
                     
-                    if (result.blocked) {
-                        // Production safety block
+                    // Unified handling: always treat as array of results
+                    const resultsArray = results;
+                    const passed = resultsArray.filter(r => r.success && !r.blocked).length;
+                    const failed = resultsArray.filter(r => !r.success && !r.blocked).length;
+                    const blocked = resultsArray.filter(r => r.blocked).length;
+                    const total = resultsArray.length;
+                    
+                    // Determine overall status
+                    if (blocked > 0) {
                         card.className = 'test-card blocked';
                         status.className = 'test-status blocked';
-                        status.innerHTML = `🔴 BLOCKED - ${result.error}`;
-                        
-                        responseDiv.innerHTML = `
-                            <strong style="color: #d50009;">🛡️ Production Safety Block:</strong>
-                            <pre style="color: #d50009; font-weight: bold;">${result.error}</pre>
-                            <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #d50009; border-radius: 4px;">
-                                <strong>ℹ️ Allowed Production CIDs:</strong>
-                                <ul style="margin: 5px 0; padding-left: 20px;">
-                                    <li><strong>4547</strong> - Test Account</li>
-                                    <li><strong>1995</strong> - Test Account</li>
-                                </ul>
-                                <p style="margin: 5px 0; font-size: 13px;">
-                                    Use one of these CID values in your test request body to run tests in production environments.
-                                </p>
-                            </div>
-                        `;
-                    } else if (result.success) {
+                        status.innerHTML = `🔴 ${blocked} Blocked, ${passed} Passed, ${failed} Failed`;
+                    } else if (failed === 0 && total > 0) {
                         card.className = 'test-card passed';
                         status.className = 'test-status passed';
-                        status.innerHTML = `✅ Passed (${result.response_time_ms}ms) - Status: ${result.status_code}`;
-                        
-                        responseDiv.innerHTML = `
-                            <strong>Response:</strong>
-                            <pre>${JSON.stringify(result.response_data, null, 2)}</pre>
-                        `;
+                        status.innerHTML = `✅ All ${passed} scenario${passed !== 1 ? 's' : ''} passed`;
+                    } else if (passed === 0) {
+                        card.className = 'test-card failed';
+                        status.className = 'test-status failed';
+                        status.innerHTML = `❌ All ${failed} scenario${failed !== 1 ? 's' : ''} failed`;
                     } else {
                         card.className = 'test-card failed';
                         status.className = 'test-status failed';
-                        status.innerHTML = `❌ Failed - ${result.error || 'Status: ' + result.status_code}`;
-                        
-                        responseDiv.innerHTML = `
-                            <strong>Response:</strong>
-                            <pre>${JSON.stringify(result.response_data || result.error, null, 2)}</pre>
-                        `;
+                        status.innerHTML = `⚠️ ${passed} Passed, ${failed} Failed`;
                     }
+                    
+                    // Render all scenario results in unified format
+                    let scenariosHtml = '<div style="margin-top: 15px;"><strong>Scenario Results:</strong>';
+                    resultsArray.forEach((scenarioResult, idx) => {
+                        const scenarioName = scenarioResult.scenario_name || `Scenario ${idx + 1}`;
+                        scenariosHtml += `<div style="margin-top: 10px; padding: 10px; background: #f9fafb; border-radius: 6px; border: 1px solid #e5e7eb;">
+                            <strong style="font-size: 13px; color: #667eea;">${scenarioName}</strong>
+                            ${renderSingleResult(scenarioResult, null)}
+                        </div>`;
+                    });
+                    scenariosHtml += '</div>';
+                    responseDiv.innerHTML = scenariosHtml;
                 });
                 
                 updateSummary();
@@ -811,12 +1261,45 @@
 
         function updateSummary() {
             const results = Object.values(testResults);
-            const blocked = results.filter(r => r.blocked).length;
-            const passed = results.filter(r => r.success && !r.blocked).length;
-            const failed = results.filter(r => !r.success && !r.blocked).length;
-            const avgTime = results.length > 0 
-                ? Math.round(results.reduce((sum, r) => sum + (r.response_time_ms || 0), 0) / results.length)
-                : 0;
+            let blocked = 0;
+            let passed = 0;
+            let failed = 0;
+            let totalTime = 0;
+            let totalCount = 0;
+            
+            results.forEach(result => {
+                if (result.has_multiple_scenarios && result.results) {
+                    // Multiple scenarios - count each one
+                    result.results.forEach(scenario => {
+                        if (scenario.blocked) {
+                            blocked++;
+                        } else if (scenario.success) {
+                            passed++;
+                        } else {
+                            failed++;
+                        }
+                        if (scenario.response_time_ms) {
+                            totalTime += scenario.response_time_ms;
+                            totalCount++;
+                        }
+                    });
+                } else {
+                    // Single scenario
+                    if (result.blocked) {
+                        blocked++;
+                    } else if (result.success) {
+                        passed++;
+                    } else {
+                        failed++;
+                    }
+                    if (result.response_time_ms) {
+                        totalTime += result.response_time_ms;
+                        totalCount++;
+                    }
+                }
+            });
+            
+            const avgTime = totalCount > 0 ? Math.round(totalTime / totalCount) : 0;
             
             document.getElementById('passedTests').textContent = passed;
             document.getElementById('failedTests').textContent = failed;
@@ -927,13 +1410,19 @@
                 // Find the test case details
                 const testCase = testCases.find(tc => tc.id === result.test_id);
                 
-                const apiName = result.test_name || testCase?.name || 'Unknown';
+                // Use scenario name if available, otherwise just test name
+                let apiName = result.test_name || testCase?.name || 'Unknown';
+                if (result.scenario_name) {
+                    apiName += ` - ${result.scenario_name}`;
+                }
+                
                 const statusCode = result.blocked ? 'BLOCKED' : (result.status_code || 'N/A');
                 const responseTime = result.response_time_ms ? `${result.response_time_ms}ms` : 'N/A';
                 const resultStatus = result.blocked ? '🔴 BLOCKED' : (result.success ? '✅ PASSED' : '❌ FAILED');
                 
-                // Format JSON with proper indentation (4 spaces)
-                const requestStr = JSON.stringify(testCase?.body || {}, null, 4);
+                // Use request_body from result if available (for multiple scenarios), otherwise fall back to testCase.body
+                const requestBody = result.request_body || testCase?.body || {};
+                const requestStr = JSON.stringify(requestBody, null, 4);
                 const responseStr = result.blocked 
                     ? result.error 
                     : JSON.stringify(result.response_data || result.error || {}, null, 4);

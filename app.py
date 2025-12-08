@@ -6,9 +6,11 @@ from flask_cors import CORS
 import requests
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 import json
+import base64
+from calendar import monthrange
 
 # Configure logging
 # Only use basicConfig when NOT running under Gunicorn
@@ -736,9 +738,310 @@ def get_test_cases():
         return jsonify({'error': str(e)}), 500
 
 
+def calculate_auto_payment_dates(day_offset: int = 0) -> Dict[str, str]:
+    """
+    Calculate dates for auto payment:
+    - start_date: First day of next month + day_offset days
+    - end_date: Two months from start_date
+    - For Bimonthly: first_payment on start_date, second_payment on start_date + 14 days
+    Returns dates in YYYY-MM-DD format.
+    
+    Args:
+        day_offset: Number of days to add to the base start_date (for incremental dates)
+    """
+    today = datetime.now()
+    
+    # Calculate base start date (first day of next month)
+    if today.month == 12:
+        base_start_date = today.replace(year=today.year + 1, month=1, day=1)
+    else:
+        base_start_date = today.replace(month=today.month + 1, day=1)
+    
+    # Add day offset for incremental dates
+    start_date = base_start_date + timedelta(days=day_offset)
+    
+    # Calculate end_date: two months from start_date's month, always on the 1st
+    # This ensures end_date is always the 1st of the month, regardless of start_date's day
+    if start_date.month <= 10:
+        end_date = start_date.replace(month=start_date.month + 2, day=1)
+    elif start_date.month == 11:
+        end_date = start_date.replace(year=start_date.year + 1, month=1, day=1)
+    else:  # month == 12
+        end_date = start_date.replace(year=start_date.year + 1, month=2, day=1)
+    
+    # For Bimonthly: first_payment on start_date, second_payment 14 days later
+    # If start_date is 1st, second_payment should be 15th
+    if start_date.day == 1:
+        second_payment_date = start_date.replace(day=15)
+    else:
+        second_payment_date = start_date + timedelta(days=14)
+    
+    return {
+        'start_date': start_date.strftime('%Y-%m-%d'),
+        'end_date': end_date.strftime('%Y-%m-%d'),
+        'first_payment_start_date': start_date.strftime('%Y-%m-%d'),
+        'second_payment_start_date': second_payment_date.strftime('%Y-%m-%d')
+    }
+
+
+def apply_auto_payment_config(request_body: Dict[str, Any], auto_payment_config: Dict[str, Any], day_offset: int = 0) -> Dict[str, Any]:
+    """
+    Apply auto payment configuration to request body:
+    - Update payment_account_id and payment_type_id if provided
+    - Always calculate and set dates (start_date, end_date) with incremental offset
+    - For Bimonthly: set first_payment.start_date and second_payment.start_date
+    
+    Args:
+        request_body: The request body to modify
+        auto_payment_config: Configuration with payment_account_id and payment_type_id
+        day_offset: Number of days to offset start_date (for incremental dates per scenario)
+    """
+    if not isinstance(request_body, dict):
+        return request_body
+    
+    # Update payment_account_id and payment_type_id if provided
+    if auto_payment_config and 'payment_account_id' in auto_payment_config:
+        payment_account_id = auto_payment_config['payment_account_id']
+        request_body['payment_account_id'] = int(payment_account_id) if str(payment_account_id).isdigit() else payment_account_id
+    
+    if auto_payment_config and 'payment_type_id' in auto_payment_config:
+        payment_type_id = auto_payment_config['payment_type_id']
+        request_body['payment_type_id'] = int(payment_type_id) if str(payment_type_id).isdigit() else payment_type_id
+    
+    # Always calculate dates (required for Add Auto Payment) with day offset
+    dates = calculate_auto_payment_dates(day_offset=day_offset)
+    
+    # Update start_date and end_date
+    request_body['start_date'] = dates['start_date']
+    request_body['end_date'] = dates['end_date']
+    
+    # Handle Bimonthly case
+    if 'bimonthly' in request_body and isinstance(request_body['bimonthly'], dict):
+        if 'first_payment' in request_body['bimonthly']:
+            if not isinstance(request_body['bimonthly']['first_payment'], dict):
+                request_body['bimonthly']['first_payment'] = {}
+            request_body['bimonthly']['first_payment']['start_date'] = dates['first_payment_start_date']
+        
+        if 'second_payment' in request_body['bimonthly']:
+            if not isinstance(request_body['bimonthly']['second_payment'], dict):
+                request_body['bimonthly']['second_payment'] = {}
+            request_body['bimonthly']['second_payment']['start_date'] = dates['second_payment_start_date']
+    
+    return request_body
+
+
+def apply_make_payment_config(request_body: Dict[str, Any], make_payment_config: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Apply make payment configuration to request body:
+    - Update customer_payment_account_id and payment_type_id if provided
+    
+    Args:
+        request_body: The request body to modify
+        make_payment_config: Configuration with customer_payment_account_id and payment_type_id
+    """
+    if not isinstance(request_body, dict):
+        return request_body
+    
+    # Update customer_payment_account_id if provided
+    if make_payment_config and 'customer_payment_account_id' in make_payment_config:
+        customer_payment_account_id = make_payment_config['customer_payment_account_id']
+        # Keep as string if it's already a string, otherwise convert
+        request_body['customer_payment_account_id'] = str(customer_payment_account_id)
+    
+    # Update payment_type_id if provided
+    if make_payment_config and 'payment_type_id' in make_payment_config:
+        payment_type_id = make_payment_config['payment_type_id']
+        request_body['payment_type_id'] = int(payment_type_id) if str(payment_type_id).isdigit() else payment_type_id
+    
+    return request_body
+
+
+def apply_cancel_payment_config(request_body: Dict[str, Any], cancel_payment_ids: str) -> Dict[str, Any]:
+    """
+    Apply cancel payment configuration to request body:
+    - Update payment_ids or payment_id based on what's in the request body
+    
+    Args:
+        request_body: The request body to modify
+        cancel_payment_ids: Comma-separated payment IDs string
+    """
+    if not isinstance(request_body, dict) or not cancel_payment_ids:
+        return request_body
+    
+    # Parse comma-separated IDs
+    ids_list = [id_str.strip() for id_str in cancel_payment_ids.split(',') if id_str.strip()]
+    
+    if not ids_list:
+        return request_body
+    
+    # Check if request body uses payment_id (singular) or payment_ids (plural)
+    # If it has payment_id, use that; otherwise use payment_ids
+    if 'payment_id' in request_body:
+        # Use singular - take first ID only
+        payment_id = ids_list[0]
+        request_body['payment_id'] = int(payment_id) if payment_id.isdigit() else payment_id
+    else:
+        # Use plural - can be array or single value
+        if len(ids_list) == 1:
+            # Single ID - keep as single value (int or string)
+            payment_id = ids_list[0]
+            request_body['payment_ids'] = int(payment_id) if payment_id.isdigit() else payment_id
+        else:
+            # Multiple IDs - convert to array of ints/strings
+            request_body['payment_ids'] = [
+                int(payment_id) if payment_id.isdigit() else payment_id
+                for payment_id in ids_list
+            ]
+    
+    return request_body
+
+
+def apply_receipt_payment_config(request_body: Dict[str, Any], receipt_payment_ids: str) -> Dict[str, Any]:
+    """
+    Apply receipt payment configuration to request body:
+    - Update payment_ids as a string (for Get Payment Receipt)
+    
+    Args:
+        request_body: The request body to modify
+        receipt_payment_ids: Payment IDs as string
+    """
+    if not isinstance(request_body, dict) or not receipt_payment_ids:
+        return request_body
+    
+    # Update payment_ids as a string (as required by the API)
+    request_body['payment_ids'] = receipt_payment_ids.strip()
+    
+    return request_body
+
+
+def apply_payment_status_config(request_body: Dict[str, Any], payment_status_id: str) -> Dict[str, Any]:
+    """
+    Apply payment status configuration to request body:
+    - Update payment_id if provided
+    
+    Args:
+        request_body: The request body to modify
+        payment_status_id: Payment ID as string
+    """
+    if not isinstance(request_body, dict) or not payment_status_id:
+        return request_body
+    
+    # Update payment_id (convert to int if numeric, otherwise keep as string)
+    request_body['payment_id'] = int(payment_status_id) if payment_status_id.isdigit() else payment_status_id
+    
+    return request_body
+
+
+def execute_single_request(
+    test_case: Dict[str, Any],
+    request_body: Dict[str, Any],
+    base_url: str,
+    env_id: str,
+    scenario_name: Optional[str] = None
+) -> Dict[str, Any]:
+    """Execute a single HTTP request for a test case with a specific body."""
+    url = f"{base_url}{test_case['endpoint']}"
+    start_time = datetime.utcnow()
+    
+    try:
+        # Merge test headers with global auth headers
+        merged_headers = merge_headers(test_case.get('headers', {}), use_bearer_token=True, environment_id=env_id)
+        
+        # Log headers for debugging (remove sensitive data)
+        safe_headers = {k: v[:20]+'...' if k.lower() in ['authorization', 'x-api-key'] and len(v) > 20 else v 
+                      for k, v in merged_headers.items()}
+        log_msg = f'Test {test_case["id"]} - {test_case["name"]}'
+        if scenario_name:
+            log_msg += f' - Scenario: {scenario_name}'
+        logger.info(f'{log_msg} - Env: {env_id} - Headers: {safe_headers}')
+        logger.info(f'Test {test_case["id"]} - URL: {url}')
+        
+        method = test_case['method'].upper()
+        if method == 'GET':
+            response = requests.get(
+                url,
+                headers=merged_headers,
+                params=request_body,
+                timeout=API_TIMEOUT
+            )
+        elif method == 'POST':
+            response = requests.post(
+                url,
+                headers=merged_headers,
+                json=request_body,
+                timeout=API_TIMEOUT
+            )
+        elif method == 'PUT':
+            response = requests.put(
+                url,
+                headers=merged_headers,
+                json=request_body,
+                timeout=API_TIMEOUT
+            )
+        else:
+            return {
+                'error': f'Unsupported method: {method}',
+                'success': False
+            }
+        
+        end_time = datetime.utcnow()
+        duration_ms = (end_time - start_time).total_seconds() * 1000
+        
+        # Check content type to handle binary responses (PDF, ZIP, etc.)
+        content_type = response.headers.get('Content-Type', '').lower()
+        is_binary = 'application/pdf' in content_type or 'application/zip' in content_type or 'application/octet-stream' in content_type
+        
+        try:
+            if is_binary:
+                # For binary responses, encode as base64 for JSON transport
+                response_data = base64.b64encode(response.content).decode('utf-8')
+                response_data_type = 'binary'
+            else:
+                # Try to parse as JSON, fallback to text
+                try:
+                    response_data = response.json()
+                    response_data_type = 'json'
+                except:
+                    response_data = response.text
+                    response_data_type = 'text'
+        except Exception as e:
+            response_data = str(e)
+            response_data_type = 'error'
+        
+        return {
+            'status_code': response.status_code,
+            'success': 200 <= response.status_code < 300,
+            'response_time_ms': round(duration_ms, 2),
+            'response_data': response_data,
+            'response_data_type': response_data_type,
+            'content_type': content_type,
+            'headers': dict(response.headers),
+            'timestamp': datetime.utcnow().isoformat()
+        }
+        
+    except requests.exceptions.Timeout:
+        return {
+            'error': 'Request timeout',
+            'success': False,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+    except requests.exceptions.ConnectionError as e:
+        return {
+            'error': f'Connection error: {str(e)}',
+            'success': False,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+    except Exception as e:
+        return {
+            'error': str(e),
+            'success': False,
+            'timestamp': datetime.utcnow().isoformat()
+        }
+
+
 @app.route('/api/run-test/<test_id>', methods=['POST'])
 def run_single_test(test_id):
-    """Run a single test case."""
+    """Run a single test case. Supports both single body and multiple bodies (bodies array)."""
     try:
         # Get environment from request
         data = request.get_json() or {}
@@ -762,104 +1065,244 @@ def run_single_test(test_id):
         if not test_case:
             return jsonify({'error': 'Test case not found'}), 404
         
-        # Validate CID for production environments
-        request_body = test_case.get('body', {})
-        is_valid, error_message = validate_production_cid(request_body, env_id)
-        if not is_valid:
-            logger.warning(f'🔴 Production CID validation failed for test {test_id}: {error_message}')
-            return jsonify({
-                'test_id': test_id,
-                'test_name': test_case['name'],
-                'error': error_message,
-                'success': False,
-                'blocked': True,
-                'timestamp': datetime.utcnow().isoformat()
-            }), 403
-        
         base_url = test_data['base_url']
-        url = f"{base_url}{test_case['endpoint']}"
+        results = []
         
-        start_time = datetime.utcnow()
-        
-        try:
-            # Merge test headers with global auth headers
-            # Use Bearer token for all environments
-            merged_headers = merge_headers(test_case.get('headers', {}), use_bearer_token=True, environment_id=env_id)
-            
-            # Log headers for debugging (remove sensitive data)
-            safe_headers = {k: v[:20]+'...' if k.lower() in ['authorization', 'x-api-key'] and len(v) > 20 else v 
-                          for k, v in merged_headers.items()}
-            logger.info(f'Test {test_id} - {test_case["name"]} - Env: {env_id} - Headers: {safe_headers}')
-            logger.info(f'Test {test_id} - URL: {url}')
-            
-            if test_case['method'].upper() == 'GET':
-                response = requests.get(
-                    url,
-                    headers=merged_headers,
-                    params=test_case.get('body', {}),
-                    timeout=API_TIMEOUT
-                )
-            elif test_case['method'].upper() == 'POST':
-                response = requests.post(
-                    url,
-                    headers=merged_headers,
-                    json=test_case.get('body', {}),
-                    timeout=API_TIMEOUT
-                )
-            elif test_case['method'].upper() == 'PUT':
-                response = requests.put(
-                    url,
-                    headers=merged_headers,
-                    json=test_case.get('body', {}),
-                    timeout=API_TIMEOUT
-                )
+        # Check if test case has multiple bodies (bodies array)
+        bodies = test_case.get('bodies', [])
+        if bodies:
+            # Multiple bodies - run each scenario
+            for idx, body_config in enumerate(bodies):
+                # Support both object with 'name' and 'body' or just direct body object
+                if isinstance(body_config, dict):
+                    if 'body' in body_config:
+                        scenario_name = body_config.get('name', f'Scenario {idx + 1}')
+                        request_body = body_config['body']
+                    else:
+                        # Direct body object
+                        scenario_name = f'Scenario {idx + 1}'
+                        request_body = body_config
+                else:
+                    # Invalid format
+                    results.append({
+                        'test_id': test_id,
+                        'test_name': test_case['name'],
+                        'scenario_name': f'Scenario {idx + 1}',
+                        'error': 'Invalid body format in bodies array',
+                        'success': False,
+                        'timestamp': datetime.utcnow().isoformat()
+                    })
+                    continue
+                
+                # Apply auto payment config if provided (for Add Auto Payment)
+                # Always apply dates for Add Auto Payment, even if config is empty
+                # Use scenario index as day_offset for incremental dates
+                auto_payment_config = data.get('auto_payment_config', {})
+                is_add_auto_payment = 'add auto payment' in test_case.get('name', '').lower()
+                if (auto_payment_config or is_add_auto_payment) and isinstance(request_body, dict):
+                    request_body = request_body.copy()
+                    apply_auto_payment_config(request_body, auto_payment_config, day_offset=idx)
+                
+                # Apply make payment config if provided (for Make Payment)
+                make_payment_config = data.get('make_payment_config', {})
+                if make_payment_config and isinstance(request_body, dict):
+                    request_body = request_body.copy()
+                    apply_make_payment_config(request_body, make_payment_config)
+                
+                # Apply cancel payment config if provided (for Cancel Payment)
+                cancel_payment_ids = data.get('cancel_payment_ids', '')
+                if cancel_payment_ids and isinstance(cancel_payment_ids, str) and cancel_payment_ids.strip() and isinstance(request_body, dict):
+                    request_body = request_body.copy()
+                    apply_cancel_payment_config(request_body, cancel_payment_ids)
+                
+                # Apply receipt payment config if provided (for Get Payment Receipt)
+                receipt_payment_ids = data.get('receipt_payment_ids', '')
+                if receipt_payment_ids and isinstance(receipt_payment_ids, str) and receipt_payment_ids.strip() and isinstance(request_body, dict):
+                    request_body = request_body.copy()
+                    apply_receipt_payment_config(request_body, receipt_payment_ids)
+                
+                # Apply payment status config if provided (for Get Payment Status)
+                payment_status_id = data.get('payment_status_id', '')
+                if payment_status_id and isinstance(payment_status_id, str) and payment_status_id.strip() and isinstance(request_body, dict):
+                    request_body = request_body.copy()
+                    apply_payment_status_config(request_body, payment_status_id)
+                
+                # Validate CID for production environments
+                is_valid, error_message = validate_production_cid(request_body, env_id)
+                if not is_valid:
+                    logger.warning(f'🔴 Production CID validation failed for test {test_id}, scenario {scenario_name}: {error_message}')
+                    results.append({
+                        'test_id': test_id,
+                        'test_name': test_case['name'],
+                        'scenario_name': scenario_name,
+                        'error': error_message,
+                        'success': False,
+                        'blocked': True,
+                        'timestamp': datetime.utcnow().isoformat()
+                    })
+                    continue
+                
+                # Execute request
+                result = execute_single_request(test_case, request_body, base_url, env_id, scenario_name)
+                result['test_id'] = test_id
+                result['test_name'] = test_case['name']
+                result['scenario_name'] = scenario_name
+                result['request_body'] = request_body
+                results.append(result)
+        else:
+            # Single body - backward compatibility
+            request_body = test_case.get('body', {})
+            if not isinstance(request_body, dict):
+                request_body = {}
             else:
-                return jsonify({'error': f'Unsupported method: {test_case["method"]}'}), 400
+                request_body = request_body.copy()
             
-            end_time = datetime.utcnow()
-            duration_ms = (end_time - start_time).total_seconds() * 1000
+            # Check if payment_account_ids are provided in the request (for Delete Payment Account)
+            payment_account_ids = data.get('payment_account_ids', '')
+            if payment_account_ids and isinstance(payment_account_ids, str) and payment_account_ids.strip():
+                # Parse comma-separated IDs
+                ids_list = [id_str.strip() for id_str in payment_account_ids.split(',') if id_str.strip()]
+                
+                if ids_list:
+                    # Make multiple API calls, one for each ID
+                    for payment_account_id in ids_list:
+                        # Create a copy of the request body with the specific payment_account_id
+                        current_request_body = request_body.copy()
+                        # Convert to int if it's a digit, otherwise keep as string
+                        current_request_body['payment_account_id'] = int(payment_account_id) if payment_account_id.isdigit() else payment_account_id
+                        
+                        # Validate CID for production environments
+                        is_valid, error_message = validate_production_cid(current_request_body, env_id)
+                        if not is_valid:
+                            logger.warning(f'🔴 Production CID validation failed for test {test_id}, payment_account_id {payment_account_id}: {error_message}')
+                            results.append({
+                                'test_id': test_id,
+                                'test_name': test_case['name'],
+                                'scenario_name': f'Payment Account ID: {payment_account_id}',
+                                'error': error_message,
+                                'success': False,
+                                'blocked': True,
+                                'timestamp': datetime.utcnow().isoformat()
+                            })
+                            continue
+                        
+                        # Execute request
+                        result = execute_single_request(test_case, current_request_body, base_url, env_id, f'Payment Account ID: {payment_account_id}')
+                        result['test_id'] = test_id
+                        result['test_name'] = test_case['name']
+                        result['scenario_name'] = f'Payment Account ID: {payment_account_id}'
+                        result['request_body'] = current_request_body
+                        results.append(result)
+                else:
+                    # Empty IDs list - fall through to default behavior
+                    payment_account_ids = None
             
-            try:
-                response_data = response.json()
-            except:
-                response_data = response.text
+            # Check if scheduled_payment_ids are provided in the request (for Delete Auto Payment)
+            scheduled_payment_ids = data.get('scheduled_payment_ids', '')
+            if scheduled_payment_ids and isinstance(scheduled_payment_ids, str) and scheduled_payment_ids.strip():
+                # Parse comma-separated IDs
+                ids_list = [id_str.strip() for id_str in scheduled_payment_ids.split(',') if id_str.strip()]
+                
+                if ids_list:
+                    # Make multiple API calls, one for each ID
+                    for scheduled_payment_id in ids_list:
+                        # Create a copy of the request body with the specific scheduled_payment_id
+                        current_request_body = request_body.copy()
+                        # Convert to int if it's a digit, otherwise keep as string
+                        current_request_body['scheduled_payment_id'] = int(scheduled_payment_id) if scheduled_payment_id.isdigit() else scheduled_payment_id
+                        
+                        # Validate CID for production environments
+                        is_valid, error_message = validate_production_cid(current_request_body, env_id)
+                        if not is_valid:
+                            logger.warning(f'🔴 Production CID validation failed for test {test_id}, scheduled_payment_id {scheduled_payment_id}: {error_message}')
+                            results.append({
+                                'test_id': test_id,
+                                'test_name': test_case['name'],
+                                'scenario_name': f'Scheduled Payment ID: {scheduled_payment_id}',
+                                'error': error_message,
+                                'success': False,
+                                'blocked': True,
+                                'timestamp': datetime.utcnow().isoformat()
+                            })
+                            continue
+                        
+                        # Execute request
+                        result = execute_single_request(test_case, current_request_body, base_url, env_id, f'Scheduled Payment ID: {scheduled_payment_id}')
+                        result['test_id'] = test_id
+                        result['test_name'] = test_case['name']
+                        result['scenario_name'] = f'Scheduled Payment ID: {scheduled_payment_id}'
+                        result['request_body'] = current_request_body
+                        results.append(result)
+                else:
+                    # Empty IDs list - fall through to default behavior
+                    scheduled_payment_ids = None
             
-            result = {
-                'test_id': test_id,
-                'test_name': test_case['name'],
-                'status_code': response.status_code,
-                'success': 200 <= response.status_code < 300,
-                'response_time_ms': round(duration_ms, 2),
-                'response_data': response_data,
-                'headers': dict(response.headers),
-                'timestamp': datetime.utcnow().isoformat()
-            }
-            
-            return jsonify(result), 200
-            
-        except requests.exceptions.Timeout:
+            # If no payment_account_ids or scheduled_payment_ids provided, use default behavior
+            if (not payment_account_ids or not isinstance(payment_account_ids, str) or not payment_account_ids.strip()) and \
+               (not scheduled_payment_ids or not isinstance(scheduled_payment_ids, str) or not scheduled_payment_ids.strip()):
+                # Apply auto payment config if provided (for Add Auto Payment)
+                # Always apply dates for Add Auto Payment, even if config is empty
+                # For single body, day_offset is 0
+                auto_payment_config = data.get('auto_payment_config', {})
+                is_add_auto_payment = 'add auto payment' in test_case.get('name', '').lower()
+                if (auto_payment_config or is_add_auto_payment) and isinstance(request_body, dict):
+                    request_body = apply_auto_payment_config(request_body, auto_payment_config, day_offset=0)
+                
+                # Apply make payment config if provided (for Make Payment)
+                make_payment_config = data.get('make_payment_config', {})
+                if make_payment_config and isinstance(request_body, dict):
+                    request_body = apply_make_payment_config(request_body, make_payment_config)
+                
+                # Apply cancel payment config if provided (for Cancel Payment)
+                cancel_payment_ids = data.get('cancel_payment_ids', '')
+                if cancel_payment_ids and isinstance(cancel_payment_ids, str) and cancel_payment_ids.strip() and isinstance(request_body, dict):
+                    request_body = apply_cancel_payment_config(request_body, cancel_payment_ids)
+                
+                # Apply receipt payment config if provided (for Get Payment Receipt)
+                receipt_payment_ids = data.get('receipt_payment_ids', '')
+                if receipt_payment_ids and isinstance(receipt_payment_ids, str) and receipt_payment_ids.strip() and isinstance(request_body, dict):
+                    request_body = apply_receipt_payment_config(request_body, receipt_payment_ids)
+                
+                # Apply payment status config if provided (for Get Payment Status)
+                payment_status_id = data.get('payment_status_id', '')
+                if payment_status_id and isinstance(payment_status_id, str) and payment_status_id.strip() and isinstance(request_body, dict):
+                    request_body = apply_payment_status_config(request_body, payment_status_id)
+                
+                # Validate CID for production environments
+                is_valid, error_message = validate_production_cid(request_body, env_id)
+                if not is_valid:
+                    logger.warning(f'🔴 Production CID validation failed for test {test_id}: {error_message}')
+                    return jsonify({
+                        'test_id': test_id,
+                        'test_name': test_case['name'],
+                        'error': error_message,
+                        'success': False,
+                        'blocked': True,
+                        'timestamp': datetime.utcnow().isoformat()
+                    }), 403
+                
+                # Execute request
+                result = execute_single_request(test_case, request_body, base_url, env_id)
+                result['test_id'] = test_id
+                result['test_name'] = test_case['name']
+                result['request_body'] = request_body
+                results.append(result)
+        
+        # Return single result for backward compatibility, or array if multiple bodies
+        if len(results) == 1:
+            return jsonify(results[0]), 200
+        else:
             return jsonify({
                 'test_id': test_id,
                 'test_name': test_case['name'],
-                'error': 'Request timeout',
-                'success': False,
-                'timestamp': datetime.utcnow().isoformat()
-            }), 200
-        except requests.exceptions.ConnectionError as e:
-            return jsonify({
-                'test_id': test_id,
-                'test_name': test_case['name'],
-                'error': f'Connection error: {str(e)}',
-                'success': False,
-                'timestamp': datetime.utcnow().isoformat()
-            }), 200
-        except Exception as e:
-            return jsonify({
-                'test_id': test_id,
-                'test_name': test_case['name'],
-                'error': str(e),
-                'success': False,
-                'timestamp': datetime.utcnow().isoformat()
+                'has_multiple_scenarios': True,
+                'results': results,
+                'summary': {
+                    'total': len(results),
+                    'passed': sum(1 for r in results if r.get('success', False)),
+                    'failed': sum(1 for r in results if not r.get('success', False)),
+                    'blocked': sum(1 for r in results if r.get('blocked', False))
+                }
             }), 200
             
     except Exception as e:
@@ -869,7 +1312,7 @@ def run_single_test(test_id):
 
 @app.route('/api/run-all-tests', methods=['POST'])
 def run_all_tests():
-    """Run all test cases."""
+    """Run all test cases. Supports both single body and multiple bodies (bodies array)."""
     try:
         # Get environment from request
         data = request.get_json() or {}
@@ -890,115 +1333,92 @@ def run_all_tests():
             test_data = json.load(f)
         
         results = []
+        base_url = test_data['base_url']
+        
         for test_case in test_data['test_cases']:
-            # Validate CID for production environments
-            request_body = test_case.get('body', {})
-            is_valid, error_message = validate_production_cid(request_body, env_id)
-            if not is_valid:
-                logger.warning(f'🔴 Production CID validation failed for test {test_case["id"]}: {error_message}')
-                results.append({
-                    'test_id': test_case['id'],
-                    'test_name': test_case['name'],
-                    'category': test_case.get('category', 'Uncategorized'),
-                    'error': error_message,
-                    'success': False,
-                    'blocked': True,
-                    'timestamp': datetime.utcnow().isoformat()
-                })
-                continue
-            
-            # Simulate calling run_single_test
-            base_url = test_data['base_url']
-            url = f"{base_url}{test_case['endpoint']}"
-            
-            start_time = datetime.utcnow()
-            
-            try:
-                # Merge test headers with global auth headers
-                # Use Bearer token for all environments
-                merged_headers = merge_headers(test_case.get('headers', {}), use_bearer_token=True, environment_id=env_id)
+            # Check if test case has multiple bodies (bodies array)
+            bodies = test_case.get('bodies', [])
+            if bodies:
+                # Multiple bodies - run each scenario
+                for idx, body_config in enumerate(bodies):
+                    # Support both object with 'name' and 'body' or just direct body object
+                    if isinstance(body_config, dict):
+                        if 'body' in body_config:
+                            scenario_name = body_config.get('name', f'Scenario {idx + 1}')
+                            request_body = body_config['body']
+                        else:
+                            # Direct body object
+                            scenario_name = f'Scenario {idx + 1}'
+                            request_body = body_config
+                    else:
+                        # Invalid format
+                        results.append({
+                            'test_id': test_case['id'],
+                            'test_name': test_case['name'],
+                            'category': test_case.get('category', 'Uncategorized'),
+                            'scenario_name': f'Scenario {idx + 1}',
+                            'error': 'Invalid body format in bodies array',
+                            'success': False,
+                            'timestamp': datetime.utcnow().isoformat()
+                        })
+                        continue
+                    
+                    # Validate CID for production environments
+                    is_valid, error_message = validate_production_cid(request_body, env_id)
+                    if not is_valid:
+                        logger.warning(f'🔴 Production CID validation failed for test {test_case["id"]}, scenario {scenario_name}: {error_message}')
+                        results.append({
+                            'test_id': test_case['id'],
+                            'test_name': test_case['name'],
+                            'category': test_case.get('category', 'Uncategorized'),
+                            'scenario_name': scenario_name,
+                            'error': error_message,
+                            'success': False,
+                            'blocked': True,
+                            'timestamp': datetime.utcnow().isoformat()
+                        })
+                        continue
+                    
+                    # Execute request
+                    result = execute_single_request(test_case, request_body, base_url, env_id, scenario_name)
+                    result['test_id'] = test_case['id']
+                    result['test_name'] = test_case['name']
+                    result['category'] = test_case.get('category', 'Uncategorized')
+                    result['scenario_name'] = scenario_name
+                    result['request_body'] = request_body
+                    results.append(result)
+            else:
+                # Single body - backward compatibility
+                request_body = test_case.get('body', {})
                 
-                if test_case['method'].upper() == 'GET':
-                    response = requests.get(
-                        url,
-                        headers=merged_headers,
-                        params=test_case.get('body', {}),
-                        timeout=API_TIMEOUT
-                    )
-                elif test_case['method'].upper() == 'POST':
-                    response = requests.post(
-                        url,
-                        headers=merged_headers,
-                        json=test_case.get('body', {}),
-                        timeout=API_TIMEOUT
-                    )
-                elif test_case['method'].upper() == 'PUT':
-                    response = requests.put(
-                        url,
-                        headers=merged_headers,
-                        json=test_case.get('body', {}),
-                        timeout=API_TIMEOUT
-                    )
-                else:
+                # Validate CID for production environments
+                is_valid, error_message = validate_production_cid(request_body, env_id)
+                if not is_valid:
+                    logger.warning(f'🔴 Production CID validation failed for test {test_case["id"]}: {error_message}')
                     results.append({
                         'test_id': test_case['id'],
                         'test_name': test_case['name'],
-                        'error': f'Unsupported method: {test_case["method"]}',
-                        'success': False
+                        'category': test_case.get('category', 'Uncategorized'),
+                        'error': error_message,
+                        'success': False,
+                        'blocked': True,
+                        'timestamp': datetime.utcnow().isoformat()
                     })
                     continue
                 
-                end_time = datetime.utcnow()
-                duration_ms = (end_time - start_time).total_seconds() * 1000
-                
-                try:
-                    response_data = response.json()
-                except:
-                    response_data = response.text
-                
-                results.append({
-                    'test_id': test_case['id'],
-                    'test_name': test_case['name'],
-                    'category': test_case.get('category', 'Uncategorized'),
-                    'status_code': response.status_code,
-                    'success': 200 <= response.status_code < 300,
-                    'response_time_ms': round(duration_ms, 2),
-                    'response_data': response_data,
-                    'timestamp': datetime.utcnow().isoformat()
-                })
-                
-            except requests.exceptions.Timeout:
-                results.append({
-                    'test_id': test_case['id'],
-                    'test_name': test_case['name'],
-                    'category': test_case.get('category', 'Uncategorized'),
-                    'error': 'Request timeout',
-                    'success': False,
-                    'timestamp': datetime.utcnow().isoformat()
-                })
-            except requests.exceptions.ConnectionError as e:
-                results.append({
-                    'test_id': test_case['id'],
-                    'test_name': test_case['name'],
-                    'category': test_case.get('category', 'Uncategorized'),
-                    'error': f'Connection error: {str(e)}',
-                    'success': False,
-                    'timestamp': datetime.utcnow().isoformat()
-                })
-            except Exception as e:
-                results.append({
-                    'test_id': test_case['id'],
-                    'test_name': test_case['name'],
-                    'category': test_case.get('category', 'Uncategorized'),
-                    'error': str(e),
-                    'success': False,
-                    'timestamp': datetime.utcnow().isoformat()
-                })
+                # Execute request
+                result = execute_single_request(test_case, request_body, base_url, env_id)
+                result['test_id'] = test_case['id']
+                result['test_name'] = test_case['name']
+                result['category'] = test_case.get('category', 'Uncategorized')
+                result['request_body'] = request_body
+                results.append(result)
         
         summary = {
             'total': len(results),
             'passed': sum(1 for r in results if r.get('success', False)),
             'failed': sum(1 for r in results if not r.get('success', False)),
+            'blocked': sum(1 for r in results if r.get('blocked', False)),
             'avg_response_time_ms': round(
                 sum(r.get('response_time_ms', 0) for r in results if r.get('success', False)) / 
                 max(sum(1 for r in results if r.get('success', False)), 1),

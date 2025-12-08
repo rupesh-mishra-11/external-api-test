@@ -1,5 +1,5 @@
 {
-  "base_url": "https://us-residentpay-external.s01a0001.entratastage.com",
+"base_url": "https://us-residentpay-external.s01a0001.entratastage.com",
   "test_cases": [
     {
       "id": "ss_1",
@@ -11,20 +11,21 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 84540,
-        "customer_id": 32089719,
-        "lease_id": 15723637,
-        "payment_type_id": 4,
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "payment_type_id": 5,
         "is_refundable": false,
-        "account_nickname": "test12",
-        "bank_info": {
-          "name_on_account": "Plaid Saving255",
-          "bank_name": "SunTrust2",
-          "routing_number": "324377820",
-          "nickname": "test5",
-          "account_number": "1234567890",
-          "account_type_id": 4
+        "account_nickname": "Prepaid",
+        "card_info": {
+          "masked_card_number": "5112010201000109",
+          "secure_reference_number": 531027,
+          "name_on_card": "Prepaid",
+          "exp_month": "02",
+          "exp_year": "2026",
+          "postal_code": "32013",
+          "nickname": "Prepaid & debit"
         }
       },
       "category": "Payment Account"
@@ -35,18 +36,37 @@
       "endpoint": "/getPaymentAccounts",
       "method": "POST",
       "headers": {
+        "x-client-type": "Test-client",
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 84540,
-        "customer_id": 32089719,
-        "lease_id": 15723637
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091
       },
       "category": "Payment Account"
     },
     {
       "id": "ss_3",
+      "name": "Delete Payment Account",
+      "endpoint": "/deletePaymentAccount",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "only_refundable": false,
+        "payment_account_id": 1361200
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "ss_4",
       "name": "Get Permissions",
       "endpoint": "/settings/getPermissions",
       "method": "POST",
@@ -54,15 +74,140 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 84540,
-        "customer_id": 32089719,
-        "lease_id": 15723637
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091
       },
       "category": "Settings"
     },
     {
-      "id": "ss_4",
+      "id": "ss_5",
+      "name": "Add Auto Payment",
+      "endpoint": "/autopayments/addAutoPayment",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "bodies": [{
+        "name": "Monthly",
+        "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "payment_type_id": 4,
+        "agrees_to_terms": true,
+        "agrees_to_fees": true,
+        "agrees_to_duplicate": false,
+        "start_date": "2025-11-29",
+        "end_date": "2026-11-27",
+        "payment_account_id": 1329007,
+        "monthly": {
+          "payment_amount": "0",
+          "max_payment_amount": "0",
+          "is_variable_amount": true
+        }
+      }
+      },
+      {
+        "name": "Split",
+        "body": {
+          "cid": 1995,
+          "property_id": 28007,
+          "customer_id": 31877269,
+          "lease_id": 15429091,
+          "payment_type_id": 5,
+          "agrees_to_terms": true,
+          "agrees_to_fees": true,
+          "start_date": "2025-12-21",
+          "end_date": "2026-07-14",
+          "payment_account_id": 1330701,
+         "split": {
+            "payment_amount": 10,
+            "payment_amount_rate": 100,
+            "roommate_payments": [
+              {
+                "customer_id": 31877269,
+                "payment_amount": 5,
+                "payment_amount_rate": 50
+              },
+              {
+                "customer_id": 31877269,
+                "payment_amount": 5,
+                "payment_amount_rate": 50
+              }
+            ]
+          }
+        
+        }
+    },
+    {
+      "name": "Bimonthly",
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "payment_type_id": 5,
+        "agrees_to_terms": true,
+        "agrees_to_fees": true,
+        "start_date": "2025-12-21",
+        "end_date": "2026-07-14",
+        "payment_account_id": 1330701,
+       "bimonthly": {
+          "first_payment": {
+            "id": 0,
+            "start_date": "2026-01-07",
+            "max_payment_amount":1
+          },
+          "second_payment": {
+            "id": 0,
+            "start_date": "2026-01-15",
+            "max_payment_amount": 2
+          }
+        }
+      }
+    }
+      ],
+      
+      "category": "Auto Payment"
+    },
+    {
+      "id": "ss_6",
+      "name": "Delete Auto Payment",
+      "endpoint": "/autopayments/deleteAutoPayment",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "scheduled_payment_id": 263866
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "ss_7",
+      "name": "Get Auto Payments",
+      "endpoint": "/autopayments/getAutoPayments",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "ss_8",
       "name": "Make Payment",
       "endpoint": "/makePayment",
       "method": "PUT",
@@ -70,10 +215,10 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 84540,
-        "customer_id": 32089719,
-        "lease_id": 15723637,
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
         "customer_payment_account_id": "1329007",
         "description": "VISA",
         "agrees_to_fees": true,
@@ -86,7 +231,25 @@
       "category": "Payment"
     },
     {
-      "id": "ss_5",
+      "id": "ss_9",
+      "name": "Cancel Payment",
+      "endpoint": "/cancelPayment",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "payment_ids": 1575816216,
+        "cancellation_reason": "testing cancel"
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "ss_10",
       "name": "Get Payment Types",
       "endpoint": "/getPaymentTypes",
       "method": "POST",
@@ -94,13 +257,220 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 84540,
-        "customer_id": 32089719,
-        "lease_id": 15723637,
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
         "payment_amount": 100
       },
+      "category": "Payment"
+    },
+    {
+      "id": "ss_11",
+      "name": "Get Payment History",
+      "endpoint": "/getPaymentHistory",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "ss_12",
+      "name": "Link Bank Account",
+      "endpoint": "/linkBankAccount",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "public_token": "public-sandbox-example-token"
+      },
+      "category": "Payment Account"
+    },
+    {
+      "id": "ss_13",
+      "name": "Get Balance Detail",
+      "endpoint": "/getBalanceDetail",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "ss_14",
+      "name": "Get Payment Receipt",
+      "endpoint": "/getPaymentReceipt",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "payment_ids": "1575816881"
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "ss_15",
+      "name": "Get Payment Status",
+      "endpoint": "/getPaymentStatus",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "payment_id": 1575716428
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "ss_16",
+      "name": "Get Payment Settings",
+      "endpoint": "/settings/getPaymentSettings",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091
+      },
       "category": "Settings"
+    },
+    {
+      "id": "ss_17",
+      "name": "Get Payment Account Settings",
+      "endpoint": "/settings/getPaymentAccountSettings",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "ss_18",
+      "name": "Get Auto Payment Settings",
+      "endpoint": "/settings/getAutoPaymentSettings",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091
+      },
+      "category": "Settings"
+    },
+    {
+      "id": "ss_19",
+      "name": "Get Repayment Details",
+      "endpoint": "/getRepaymentDetails",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "ss_20",
+      "name": "MoneyGram - Get Account",
+      "endpoint": "/moneygram/getAccount",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "payment_account_id": 1332527
+      },
+      "category": "MoneyGram"
+    },
+    {
+      "id": "ss_21",
+      "name": "MoneyGram - Get Instruction",
+      "endpoint": "/moneygram/getInstruction",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "payment_account_id": 1332527
+      },
+      "category": "MoneyGram"
+    },
+    {
+      "id": "ss_22",
+      "name": "MoneyGram - Add Account",
+      "endpoint": "/moneygram/addAccount",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "payment_type_id": 6,
+        "card_info": {
+          "masked_card_number": "445700XXXXXX0008",
+          "secure_token": "23411e001d65c2196258c4cf12ca7194",
+          "name_on_card": "Test Resident",
+          "exp_month": "02",
+          "exp_year": "2027",
+          "postal_code": "12345",
+          "nickname": "Test Resident"
+        }
+      },
+      "category": "MoneyGram"
     }
   ]
 }

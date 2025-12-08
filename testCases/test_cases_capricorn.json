@@ -7,27 +7,215 @@
       "endpoint": "/addPaymentAccount",
       "method": "PUT",
       "headers": {
-        "x-client-type": "mobile",
+        "x-client-type": "mobile-ios",
         "Content-Type": "application/json"
       },
-      "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32133978,
-        "lease_id": 15794529,
-        "payment_type_id": 5,
-        "is_refundable": false,
-        "account_nickname": "Prepaid",
-        "card_info": {
-          "masked_card_number": "5112010201000109",
-          "secure_reference_number": 531027,
-          "name_on_card": "Prepaid",
-          "exp_month": "02",
-          "exp_year": "2026",
-          "postal_code": "32013",
-          "nickname": "Prepaid & debit"
+      "bodies": [{
+          "name": "ACH Account",
+          "body": {
+            "cid": 4547,
+            "property_id": 1065678,
+            "customer_id": 32135986,
+            "lease_id": 15794529,
+          "payment_type_id": 4,
+          "is_refundable": false,
+          "account_nickname": "ACH Account",
+          "bank_info": {
+            "name_on_account": "ACH Account",
+            "bank_name": "Bank of America",
+            "routing_number": "324377820",
+            "nickname": "ACH Account",
+            "account_number": "1234567890",
+            "account_type_id": 4
+          },
+          "payment_method_screening": {
+              "name_first":"Leanne",
+              "name_middle":"T",
+              "name_last":"Graham",
+              "dob":"11/11/1994",
+              "is_self_verified":true,
+              "postal_addresses": {
+                  "country": "US",
+                  "addressLine1":"Gwenborough",
+                  "addressLine2":"Kulas Light",
+                  "locality":"loc",
+                  "administrativeArea":"LA",
+                  "postalCode":41101
+              }
+          }
         }
-      },
+        },
+        {
+          "name": "Visa Debit Card",
+          "body": {
+            "cid": 4547,
+            "property_id": 1065678,
+            "customer_id": 32135986,
+            "lease_id": 15794529,
+            "payment_type_id" : 5,
+            "card_info": {
+                "masked_card_number":"445701XXXXXX0009",
+                "secure_reference_number":545192,
+                "name_on_card":"Visa-Debit",
+                "exp_month":"02",
+            "exp_year":"2033",
+            "postal_code":"320131",
+                "nickname":"Visa-Debit"
+            },
+            "payment_method_screening": {
+              "name_first":"Leanne",
+              "name_middle":"T",
+              "name_last":"Graham",
+              "dob":"11/11/1994",
+              "is_self_verified":true,
+              "postal_addresses": {
+                  "country": "US",
+                  "addressLine1":"Gwenborough",
+                  "addressLine2":"Kulas Light",
+                  "locality":"loc",
+                  "administrativeArea":"LA",
+                  "postalCode":41101
+              }
+            }
+          }
+        },
+        {
+          "name": "Visa Credit Card",
+          "body": {
+            "cid": 4547,
+            "property_id": 1065678,
+            "customer_id": 32135986,
+            "lease_id": 15794529,
+            "payment_type_id" : 5,
+            "card_info": {
+                "masked_card_number":"5452445701XXXXXX014104",
+                "secure_reference_number":545204,
+                "name_on_card":"Visa-Credit",
+                "exp_month":"02",
+            "exp_year":"2033",
+            "postal_code":"320131",
+                "nickname":"Visa-Credit"
+            },
+            "payment_method_screening": {
+              "name_first":"Leanne",
+              "name_middle":"T",
+              "name_last":"Graham",
+              "dob":"11/11/1994",
+              "is_self_verified":true,
+              "postal_addresses": {
+                  "country": "US",
+                  "addressLine1":"Gwenborough",
+                  "addressLine2":"Kulas Light",
+                  "locality":"loc",
+                  "administrativeArea":"LA",
+                  "postalCode":41101
+              }
+            }
+          }
+        },
+        {
+          "name": "Master Card",
+          "body": {
+            "cid": 4547,
+            "property_id": 1065678,
+            "customer_id": 32135986,
+            "lease_id": 15794529,
+            "payment_type_id" : 6,
+            "card_info": {
+                "masked_card_number":"511200XXXXXX0003",
+                "secure_reference_number":545205,
+                "name_on_card":"Master-Card",
+                "exp_month":"02",
+            "exp_year":"2033",
+            "postal_code":"320131",
+                "nickname":"Master-Card"
+            },
+            "payment_method_screening": {
+              "name_first":"Leanne",
+              "name_middle":"T",
+              "name_last":"Graham",
+              "dob":"11/11/1994",
+              "is_self_verified":true,
+              "postal_addresses": {
+                  "country": "US",
+                  "addressLine1":"Gwenborough",
+                  "addressLine2":"Kulas Light",
+                  "locality":"loc",
+                  "administrativeArea":"LA",
+                  "postalCode":41101
+              }
+            }
+          }
+        },
+        {
+          "name": "Discover Card",
+          "body": {
+            "cid": 4547,
+          "property_id": 1065678,
+          "customer_id": 32135986,
+          "lease_id": 15794529,
+            "payment_type_id" : 7,
+            "card_info": {
+                "masked_card_number":"601101XXXXXX0003",
+                "secure_reference_number":545206,
+                "name_on_card":"Discover-Card",
+                "exp_month":"02",
+            "exp_year":"2033",
+            "postal_code":"320131",
+                "nickname":"Discover-Card"
+            },
+            "payment_method_screening": {
+              "name_first":"Leanne",
+              "name_middle":"T",
+              "name_last":"Graham",
+              "dob":"11/11/1994",
+              "is_self_verified":true,
+              "postal_addresses": {
+                  "country": "US",
+                  "addressLine1":"Gwenborough",
+                  "addressLine2":"Kulas Light",
+                  "locality":"loc",
+                  "administrativeArea":"LA",
+                  "postalCode":41101
+              }
+            }
+          }
+        },
+        {
+          "name": "American Express Card",
+          "body": {
+            "cid": 4547,
+          "property_id": 1065678,
+          "customer_id": 32135986,
+          "lease_id": 15794529,
+            "payment_type_id" : 8,
+            "card_info": {
+                "masked_card_number":"375000XXXXX0004",
+                "secure_reference_number":545207,
+                "name_on_card":"American-Express",
+                "exp_month":"02",
+            "exp_year":"2033",
+            "postal_code":"320131",
+                "nickname":"American-Express"
+            },
+            "payment_method_screening": {
+              "name_first":"Leanne",
+              "name_middle":"T",
+              "name_last":"Graham",
+              "dob":"11/11/1994",
+              "is_self_verified":true,
+              "postal_addresses": {
+                  "country": "US",
+                  "addressLine1":"Gwenborough",
+                  "addressLine2":"Kulas Light",
+                  "locality":"loc",
+                  "administrativeArea":"LA",
+                  "postalCode":41101
+              }
+            }
+          }
+        }
+      ],
       "category": "Payment Account"
     },
     {
@@ -42,7 +230,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529
       },
       "category": "Payment Account"
@@ -58,7 +246,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529,
         "payment_account_id": 1327749
       },
@@ -66,33 +254,19 @@
     },
     {
       "id": "cap_4",
-      "name": "Get Permissions",
-      "endpoint": "/settings/getPermissions",
-      "method": "POST",
-      "headers": {
-        "Content-Type": "application/json"
-      },
-      "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32133978,
-        "lease_id": 15794529
-      },
-      "category": "Settings"
-    },
-    {
-      "id": "cap_5",
       "name": "Add Auto Payment",
       "endpoint": "/autopayments/addAutoPayment",
       "method": "PUT",
       "headers": {
         "Content-Type": "application/json"
       },
-      "body": {
+      "bodies": [{
+        "name": "Monthly",
+        "body": {
         "cid": 4547,
-        "property_id": 1108954,
-        "customer_id": 31743460,
-        "lease_id": 15468624,
+        "property_id": 1065678,
+        "customer_id": 32135986,
+        "lease_id": 15794529,
         "payment_type_id": 4,
         "agrees_to_terms": true,
         "agrees_to_fees": true,
@@ -105,11 +279,73 @@
           "max_payment_amount": "0",
           "is_variable_amount": true
         }
+      }
       },
+      {
+        "name": "Split",
+        "body": {
+          "cid": 4547,
+          "property_id": 1065678,
+          "customer_id": 32135986,
+          "lease_id": 15794529,
+          "payment_type_id": 5,
+          "agrees_to_terms": true,
+          "agrees_to_fees": true,
+          "start_date": "2025-12-21",
+          "end_date": "2026-07-14",
+          "payment_account_id": 1330701,
+         "split": {
+            "payment_amount": 10,
+            "payment_amount_rate": 100,
+            "roommate_payments": [
+              {
+                "customer_id": 32135986,
+                "payment_amount": 5,
+                "payment_amount_rate": 50
+              },
+              {
+                "customer_id": 32133978,
+                "payment_amount": 5,
+                "payment_amount_rate": 50
+              }
+            ]
+          }
+        
+        }
+    },
+    {
+      "name": "Bimonthly",
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32135986,
+        "lease_id": 15794529,
+        "payment_type_id": 5,
+        "agrees_to_terms": true,
+        "agrees_to_fees": true,
+        "start_date": "2025-12-21",
+        "end_date": "2026-07-14",
+        "payment_account_id": 1330701,
+       "bimonthly": {
+          "first_payment": {
+            "id": 0,
+            "start_date": "2026-01-07",
+            "max_payment_amount":1
+          },
+          "second_payment": {
+            "id": 0,
+            "start_date": "2026-01-15",
+            "max_payment_amount": 2
+          }
+        }
+      }
+    }
+      ],
+      
       "category": "Auto Payment"
     },
     {
-      "id": "cap_6",
+      "id": "cap_5",
       "name": "Delete Auto Payment",
       "endpoint": "/autopayments/deleteAutoPayment",
       "method": "POST",
@@ -118,15 +354,15 @@
       },
       "body": {
         "cid": 4547,
-        "property_id": 1108954,
-        "customer_id": 31743460,
-        "lease_id": 15468624,
+        "property_id": 1065678,
+        "customer_id": 32135986,
+        "lease_id": 15794529,
         "scheduled_payment_id": 263866
       },
       "category": "Auto Payment"
     },
     {
-      "id": "cap_7",
+      "id": "cap_6",
       "name": "Get Auto Payments",
       "endpoint": "/autopayments/getAutoPayments",
       "method": "POST",
@@ -135,38 +371,90 @@
       },
       "body": {
         "cid": 4547,
-        "property_id": 1108954,
-        "customer_id": 31743460,
-        "lease_id": 15468624
+        "property_id": 1065678,
+        "customer_id": 32135986,
+        "lease_id": 15794529
       },
       "category": "Auto Payment"
     },
     {
-      "id": "cap_8",
+      "id": "cap_7",
       "name": "Make Payment",
       "endpoint": "/makePayment",
       "method": "PUT",
       "headers": {
         "Content-Type": "application/json"
       },
-      "body": {
-        "cid": 4547,
-        "property_id": 1108954,
-        "customer_id": 31743460,
-        "lease_id": 15468624,
-        "customer_payment_account_id": "1329007",
-        "description": "VISA",
-        "agrees_to_fees": true,
-        "payment_amount": 4,
-        "agrees_to_terms": true,
-        "payment_type_id": 5,
-        "agree_to_duplicate": true,
-        "terms_accepted_on": "2025-09-01T16:46:37"
+      "bodies": [{
+        "name": "Normal Payment",
+        "body": {
+          "cid": 4547,
+          "property_id": 1065678,
+          "customer_id": 32135986,
+          "lease_id": 15794529,
+          "customer_payment_account_id": "1329007",
+          "description": "VISA",
+          "agrees_to_fees": true,
+          "payment_amount": 1,
+          "agrees_to_terms": true,
+          "payment_type_id": 5,
+          "agree_to_duplicate": true,
+          "terms_accepted_on": "2025-09-01T16:46:37"
+        }
       },
+      {
+        "name": "Reward Points Payment",
+        "body": {
+          "cid": 4547,
+          "property_id": 1065678,
+          "customer_id": 32135986,
+          "lease_id": 15794529,
+          "customer_payment_account_id": "1329007",
+          "description": "VISA",
+          "agrees_to_fees": true,
+          "payment_amount": 0,
+          "agrees_to_terms": true,
+          "payment_type_id": 5,
+          "agree_to_duplicate": true,
+          "terms_accepted_on": "2025-09-01T16:46:37",
+          "reward_points": {
+            "conversion_rate": 0.0055,
+            "payment_amount": 0.55,
+            "points": 100,
+            "uuid": "2bb084ef-d603-4abc-96b1-09db5c1c800f",
+            "payment_case": 1
+          }
+        }
+      },
+      {
+        "name": "Reward Points + Normal Payment",
+        "body": {
+          "cid": 4547,
+          "property_id": 1065678,
+          "customer_id": 32135986,
+          "lease_id": 15794529,
+          "customer_payment_account_id": "1329007",
+          "description": "VISA",
+          "agrees_to_fees": true,
+          "payment_amount": 1,
+          "agrees_to_terms": true,
+          "payment_type_id": 5,
+          "agree_to_duplicate": true,
+          "terms_accepted_on": "2025-09-01T16:46:37",
+          "reward_points": {
+            "conversion_rate": 0.0055,
+            "payment_amount": 0.55,
+            "points": 100,
+            "uuid": "2bb084ef-d603-4abc-96b1-09db5c1c800f",
+            "payment_case": 2
+          }
+        }
+      }
+    ],
       "category": "Payment"
     },
     {
-      "id": "cap_9",
+      "id": "cap_8",
       "name": "Cancel Payment",
       "endpoint": "/cancelPayment",
       "method": "PUT",
@@ -176,7 +464,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529,
         "payment_ids": 1575816216,
         "cancellation_reason": "testing cancel"
@@ -184,7 +472,7 @@
       "category": "Payment"
     },
     {
-      "id": "cap_10",
+      "id": "cap_9",
       "name": "Get Payment Types",
       "endpoint": "/getPaymentTypes",
       "method": "POST",
@@ -194,9 +482,25 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529,
         "payment_amount": 100
+      },
+      "category": "Payment"
+    },
+    {
+      "id": "cap_10",
+      "name": "Get Permissions",
+      "endpoint": "/settings/getPermissions",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 4547,
+        "property_id": 1065678,
+        "customer_id": 32135986,
+        "lease_id": 15794529
       },
       "category": "Settings"
     },
@@ -211,7 +515,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529
       },
       "category": "Payment"
@@ -227,7 +531,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529,
         "public_token": "public-sandbox-example-token"
       },
@@ -244,7 +548,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529
       },
       "category": "Payment"
@@ -259,9 +563,9 @@
       },
       "body": {
         "cid": 4547,
-        "property_id": 1108954,
-        "customer_id": 31784562,
-        "lease_id": 15492910,
+        "property_id": 1065678,
+        "customer_id": 32135986,
+        "lease_id": 15794529,
         "payment_ids": "1575816881"
       },
       "category": "Payment"
@@ -277,7 +581,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529,
         "payment_id": 1575716428
       },
@@ -294,7 +598,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529
       },
       "category": "Settings"
@@ -310,7 +614,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529
       },
       "category": "Settings"
@@ -325,9 +629,9 @@
       },
       "body": {
         "cid": 4547,
-        "property_id": 1108954,
-        "customer_id": 31743460,
-        "lease_id": 15468624
+        "property_id": 1065678,
+        "customer_id": 32135986,
+        "lease_id": 15794529
       },
       "category": "Settings"
     },
@@ -342,7 +646,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529
       },
       "category": "Payment"
@@ -358,7 +662,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529,
         "payment_account_id": 1332527
       },
@@ -375,7 +679,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529,
         "payment_account_id": 1332527
       },
@@ -392,7 +696,7 @@
       "body": {
         "cid": 4547,
         "property_id": 1065678,
-        "customer_id": 32133978,
+        "customer_id": 32135986,
         "lease_id": 15794529,
         "payment_type_id": 6,
         "card_info": {
