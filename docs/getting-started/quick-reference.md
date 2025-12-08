@@ -125,6 +125,16 @@ docker-compose up --build -d
 - Check logs when debugging
 - Hard refresh browser after changes
 - Keep test data in `test_cases.json`
+- **Use input fields** for dynamic test parameters (no JSON editing needed!)
+- **Download receipts** directly from test results (PDF/ZIP)
+- **Auto Payment dates** are calculated automatically - no manual date entry
+
+## 🆕 Recent Features
+
+- **Dynamic Input Fields**: Test-specific inputs appear automatically
+- **PDF/ZIP Download**: One-click download for receipt files
+- **Smart Dates**: Auto Payment dates calculated automatically
+- **Category Sorting**: Tests organized by category with headers
 
 **That's it! Happy testing!** 🚀
 

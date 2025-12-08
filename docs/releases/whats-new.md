@@ -1,8 +1,38 @@
-# 🎉 What's New - Multi-Environment Support
+# 🎉 What's New - Recent Updates
 
-## NEW FEATURE: Environment Selector Dropdown
+## Latest Features (Recent Updates)
 
-Your test runner now supports **multiple environments** with an easy dropdown selector!
+### 🎯 Dynamic Input Fields for Test Cases
+Test-specific input fields that appear automatically based on test case name:
+- **Delete Payment Account**: Comma-separated payment account IDs
+- **Delete Auto Payment**: Comma-separated scheduled payment IDs  
+- **Add Auto Payment**: Payment account ID, payment type ID with automatic date calculation
+- **Make Payment**: Customer payment account ID and payment type ID
+- **Cancel Payment**: Payment IDs (supports both singular and plural in request body)
+- **Get Payment Receipt**: Payment IDs as string
+- **Get Payment Status**: Payment ID
+
+### 📥 PDF/ZIP Download for Receipts
+- Automatic download button appears for successful "Get Payment Receipt" responses
+- Supports both PDF and ZIP file formats
+- One-click download with proper file naming
+
+### 📅 Smart Date Calculation for Auto Payments
+- **start_date**: Automatically set to first day of next month
+- **end_date**: Automatically set to first day two months after start_date
+- **Bimonthly schedules**: First payment on 1st, second payment on 15th
+- **Incremental dates**: Each scenario in a test case increments start_date by one day
+
+### 🗂️ Category-Based Sorting
+- Test cases automatically sorted by category
+- Category headers displayed in UI
+- Improved navigation and organization
+
+---
+
+## Previous Feature: Environment Selector Dropdown
+
+Your test runner supports **multiple environments** with an easy dropdown selector!
 
 ---
 

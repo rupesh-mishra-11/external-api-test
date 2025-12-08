@@ -7,10 +7,20 @@ A comprehensive Flask-based application for testing external APIs with multi-env
 ### 🎯 **Web-Based Test Runner**
 - Beautiful, modern UI to execute API tests from Postman collections
 - Real-time test execution with live status updates
-- Category filtering (Payment, Settings, Auto Payment, etc.)
+- Category filtering and sorting (Payment, Settings, Auto Payment, etc.)
 - Color-coded environment indicators (🟢 Dev/Stage, 🔴 Production)
 - Detailed request/response viewer
 - Summary dashboard with pass/fail rates
+- **Dynamic Input Fields** - Custom input fields for specific test cases:
+  - Delete Payment Account: Comma-separated payment account IDs
+  - Delete Auto Payment: Comma-separated scheduled payment IDs
+  - Add Auto Payment: Payment account ID, payment type ID with automatic date calculation
+  - Make Payment: Customer payment account ID and payment type ID
+  - Cancel Payment: Payment IDs (supports both singular and plural)
+  - Get Payment Receipt: Payment IDs as string
+  - Get Payment Status: Payment ID
+- **PDF/ZIP Download** - Automatic download button for binary receipt responses
+- **Smart Date Calculation** - Auto Payment dates automatically calculated (start_date, end_date, bimonthly schedules)
 
 ### 🌍 **Multi-Environment Support**
 Test across **6 different environments** with a single click:
@@ -195,12 +205,15 @@ docker-compose up -d --build
 - ✅ **Color-Coded UI** - Green for dev/stage, Red for production
 - ✅ **Run Individual Tests** - Execute tests one-by-one
 - ✅ **Run All Tests** - Batch execution
-- ✅ **Category Filters** - Filter by Payment, Settings, Auto Payment, etc.
+- ✅ **Category Filters & Sorting** - Filter and sort by Payment, Settings, Auto Payment, etc.
 - ✅ **Real-time Results** - Watch tests execute with live updates
 - ✅ **Detailed Response Viewer** - Inspect full request/response data
 - ✅ **Summary Dashboard** - Pass/fail rates, response times, blocked count
 - ✅ **CSV Export** - Download comprehensive test reports
 - ✅ **Production Safety** - CID validation prevents accidents
+- ✅ **Dynamic Input Fields** - Test-specific input fields for IDs and parameters
+- ✅ **PDF/ZIP Download** - Automatic download button for receipt files
+- ✅ **Smart Date Calculation** - Automatic date calculation for auto payment schedules
 
 ### **Quick Test**
 
@@ -213,11 +226,35 @@ docker-compose up -d --build
 
 ### **Test Categories**
 
-- **Payment** - Payment processing APIs
-- **Payment Account** - Account management
-- **Auto Payment** - Automated payment settings
-- **Settings** - Configuration and permissions
+- **Payment** - Payment processing APIs (Make Payment, Cancel Payment, Get Payment Receipt, etc.)
+- **Payment Account** - Account management (Add/Delete Payment Account, Get Payment Accounts)
+- **Auto Payment** - Automated payment settings (Add/Delete Auto Payment, Get Auto Payments)
+- **Settings** - Configuration and permissions (Get Permissions, Get Payment Settings)
 - **Moneygram** - Moneygram integration
+
+### **Dynamic Input Fields**
+
+The test runner automatically shows input fields for specific test cases:
+
+- **Delete Payment Account**: Enter comma-separated payment account IDs (e.g., `1334083, 1334084`)
+- **Delete Auto Payment**: Enter comma-separated scheduled payment IDs (e.g., `263866, 263867`)
+- **Add Auto Payment**: 
+  - Payment Account ID and Payment Type ID
+  - Dates automatically calculated (start_date = first day of next month, end_date = first day two months later)
+  - For Bimonthly: first payment on 1st, second payment on 15th
+  - Each scenario increments start_date by one day
+- **Make Payment**: Customer Payment Account ID and Payment Type ID
+- **Cancel Payment**: Payment IDs (comma-separated, supports both `payment_id` and `payment_ids` in request)
+- **Get Payment Receipt**: Payment IDs as string (triggers download button for PDF/ZIP responses)
+- **Get Payment Status**: Payment ID
+
+### **Receipt Download**
+
+When "Get Payment Receipt" or "Download Receipt" tests return successful binary responses (PDF or ZIP):
+- ✅ Automatic download button appears
+- ✅ Button shows file type (PDF or ZIP)
+- ✅ Click to download the file
+- ✅ File named: `payment_receipt_[timestamp].[pdf|zip]`
 
 ---
 

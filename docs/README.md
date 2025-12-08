@@ -86,6 +86,8 @@ docs/
 | **Understand OAuth2 auto-refresh** | [OAuth2 Auto-Refresh](setup/authentication/oauth2-auto-refresh.md) |
 | **See what's new** | [What's New](releases/whats-new.md) |
 | **Quick command reference** | [Quick Reference](getting-started/quick-reference.md) |
+| **Use dynamic input fields** | [Test Runner](features/test-runner/README.md#dynamic-input-fields) |
+| **Download receipt files** | [Test Runner](features/test-runner/README.md#receipt-download-feature) |
 
 ---
 
@@ -113,7 +115,7 @@ All credentials loaded from `.env` file. Secure, flexible, industry-standard.
 **[Learn More →](setup/environment-variables/README.md)**
 
 ### ✅ **Web Test Runner**
-Beautiful UI to execute and monitor API tests in real-time.
+Beautiful UI to execute and monitor API tests in real-time. Features dynamic input fields, PDF/ZIP downloads, and smart date calculations.
 
 **[Learn More →](features/test-runner/README.md)**
 
