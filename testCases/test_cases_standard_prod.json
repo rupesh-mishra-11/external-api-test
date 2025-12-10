@@ -55,7 +55,7 @@
             "payment_type_id" : 5,
             "card_info": {
                 "masked_card_number":"445701XXXXXX0009",
-                "secure_reference_number":545192,
+                "secure_reference_number":38906972,
                 "name_on_card":"Visa-Debit",
                 "exp_month":"02",
             "exp_year":"2033",
@@ -396,6 +396,7 @@
           "description": "VISA",
           "agrees_to_fees": true,
           "payment_amount": 1,
+          "promise_to_pay": true,
           "agrees_to_terms": true,
           "payment_type_id": 5,
           "agree_to_duplicate": true,

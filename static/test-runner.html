@@ -346,6 +346,28 @@
             to { transform: rotate(360deg); }
         }
 
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
         .test-details {
             margin-top: 5px;
             padding: 0px 0px 20px;
@@ -440,6 +462,9 @@
             </button>
             <button class="btn btn-primary" onclick="loadTestCases()">
                 🔄 Reload Tests
+            </button>
+            <button class="btn btn-primary" onclick="refreshToken()" id="refreshTokenBtn">
+                🔑 Refresh Token
             </button>
             <button class="btn btn-primary" onclick="downloadReport()" id="downloadBtn">
                 📥 Download
@@ -1312,6 +1337,148 @@
                 blockedCard.style.display = 'block';
             } else {
                 blockedCard.style.display = 'none';
+            }
+        }
+
+        async function refreshToken() {
+            const button = document.getElementById('refreshTokenBtn');
+            const originalText = button.innerHTML;
+            
+            // Disable button and show loading state
+            button.disabled = true;
+            button.innerHTML = '⏳ Refreshing...';
+            button.style.opacity = '0.7';
+            
+            try {
+                const response = await fetch('/api/refresh-token', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        environment: currentEnvironment
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Show success message
+                    button.innerHTML = '✅ Refreshed!';
+                    button.style.background = '#10b981';
+                    
+                    // Show notification
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #10b981;
+                        color: white;
+                        padding: 15px 20px;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        z-index: 10000;
+                        font-weight: 600;
+                        animation: slideIn 0.3s ease;
+                    `;
+                    notification.innerHTML = `🔑 Token refreshed successfully!<br><small style="opacity: 0.9;">Expires in ${result.expires_in || 300} seconds</small>`;
+                    document.body.appendChild(notification);
+                    
+                    // Remove notification after 3 seconds
+                    setTimeout(() => {
+                        notification.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => {
+                            document.body.removeChild(notification);
+                        }, 300);
+                    }, 3000);
+                    
+                    // Reset button after 2 seconds
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.style.background = '';
+                        button.disabled = false;
+                        button.style.opacity = '1';
+                    }, 2000);
+                } else {
+                    // Show error message
+                    button.innerHTML = '❌ Failed';
+                    button.style.background = '#ef4444';
+                    
+                    // Show error notification
+                    const notification = document.createElement('div');
+                    notification.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        background: #ef4444;
+                        color: white;
+                        padding: 15px 20px;
+                        border-radius: 8px;
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                        z-index: 10000;
+                        font-weight: 600;
+                        animation: slideIn 0.3s ease;
+                    `;
+                    notification.innerHTML = `❌ Token refresh failed<br><small style="opacity: 0.9;">${result.error || 'Unknown error'}</small>`;
+                    document.body.appendChild(notification);
+                    
+                    // Remove notification after 5 seconds
+                    setTimeout(() => {
+                        notification.style.animation = 'slideOut 0.3s ease';
+                        setTimeout(() => {
+                            document.body.removeChild(notification);
+                        }, 300);
+                    }, 5000);
+                    
+                    // Reset button after 2 seconds
+                    setTimeout(() => {
+                        button.innerHTML = originalText;
+                        button.style.background = '';
+                        button.disabled = false;
+                        button.style.opacity = '1';
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Error refreshing token:', error);
+                
+                // Show error
+                button.innerHTML = '❌ Error';
+                button.style.background = '#ef4444';
+                
+                // Show error notification
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: #ef4444;
+                    color: white;
+                    padding: 15px 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                    z-index: 10000;
+                    font-weight: 600;
+                    animation: slideIn 0.3s ease;
+                `;
+                notification.innerHTML = `❌ Error refreshing token<br><small style="opacity: 0.9;">${error.message}</small>`;
+                document.body.appendChild(notification);
+                
+                // Remove notification after 5 seconds
+                setTimeout(() => {
+                    notification.style.animation = 'slideOut 0.3s ease';
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 300);
+                }, 5000);
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = '';
+                    button.disabled = false;
+                    button.style.opacity = '1';
+                }, 2000);
             }
         }
 

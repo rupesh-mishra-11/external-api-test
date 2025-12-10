@@ -697,6 +697,35 @@ def debug_headers():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/refresh-token', methods=['POST'])
+def refresh_token():
+    """Manually refresh OAuth2 token for the specified environment."""
+    try:
+        data = request.get_json() or {}
+        environment_id = data.get('environment', 'capricorn-trunk')
+        
+        # Call the existing refresh function
+        result = refresh_oauth2_token(environment_id)
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'message': result.get('message', 'Token refreshed successfully'),
+                'expires_in': result.get('expires_in'),
+                'environment': environment_id
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': result.get('error', 'Failed to refresh token'),
+                'environment': environment_id
+            }), 400
+            
+    except Exception as e:
+        logger.error(f'Error in refresh-token endpoint: {e}')
+        return jsonify({'error': str(e), 'success': False}), 500
+
+
 @app.route('/api/environments', methods=['GET'])
 def get_environments():
     """Get all available environments."""

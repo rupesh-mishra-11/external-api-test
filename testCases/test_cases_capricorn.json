@@ -227,12 +227,24 @@
         "x-client-type": "Test-client",
         "Content-Type": "application/json"
       },
-      "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529
+      "bodies": [{
+        "name": "Normal",
+        "body": {
+          "cid": 4547,
+          "property_id": 1065678,
+          "customer_id": 32135986,
+          "lease_id": 15794529
+        }
       },
+      {
+        "name": "Danny Test",
+        "body": {
+          "cid": 2138,
+          "property_id": 123194,
+          "customer_id": 31936185,
+          "lease_id": 13167188
+        }
+      }],
       "category": "Payment Account"
     },
     {
@@ -353,10 +365,10 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
+        "cid": 2138,
+          "property_id": 123194,
+          "customer_id": 31936185,
+          "lease_id": 13167188,
         "scheduled_payment_id": 263866
       },
       "category": "Auto Payment"
@@ -370,10 +382,7 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529
+        "cid": "2138", "lease_id": "13167188", "customer_id": "31112281", "property_id": "123194"
       },
       "category": "Auto Payment"
     },
