@@ -1,5 +1,11 @@
 {
   "base_url": "http://rsync.residentportal2.residentportal.localhost:7080",
+  "common_params": {
+    "cid": 4547,
+  "customer_id": 32135986,
+  "lease_id": 15794529,
+  "property_id": 1065678
+  },
   "test_cases": [
     {
       "id": "1",
@@ -13,10 +19,6 @@
       "bodies": [{
           "name": "ACH Account",
           "body": {
-            "cid": 4547,
-            "property_id": 1065678,
-            "customer_id": 32135986,
-            "lease_id": 15794529,
           "payment_type_id": 4,
           "is_refundable": false,
           "account_nickname": "ACH Account",
@@ -48,10 +50,6 @@
         {
           "name": "Visa Debit Card",
           "body": {
-            "cid": 4547,
-            "property_id": 1065678,
-            "customer_id": 32135986,
-            "lease_id": 15794529,
             "payment_type_id" : 5,
             "card_info": {
                 "masked_card_number":"445701XXXXXX0009",
@@ -82,10 +80,6 @@
         {
           "name": "Visa Credit Card",
           "body": {
-            "cid": 4547,
-            "property_id": 1065678,
-            "customer_id": 32135986,
-            "lease_id": 15794529,
             "payment_type_id" : 5,
             "card_info": {
                 "masked_card_number":"5452445701XXXXXX014104",
@@ -116,10 +110,6 @@
         {
           "name": "Master Card",
           "body": {
-            "cid": 4547,
-            "property_id": 1065678,
-            "customer_id": 32135986,
-            "lease_id": 15794529,
             "payment_type_id" : 6,
             "card_info": {
                 "masked_card_number":"511200XXXXXX0003",
@@ -150,10 +140,6 @@
         {
           "name": "Discover Card",
           "body": {
-            "cid": 4547,
-          "property_id": 1065678,
-          "customer_id": 32135986,
-          "lease_id": 15794529,
             "payment_type_id" : 7,
             "card_info": {
                 "masked_card_number":"601101XXXXXX0003",
@@ -184,10 +170,6 @@
         {
           "name": "American Express Card",
           "body": {
-            "cid": 4547,
-          "property_id": 1065678,
-          "customer_id": 32135986,
-          "lease_id": 15794529,
             "payment_type_id" : 8,
             "card_info": {
                 "masked_card_number":"375000XXXXX0004",
@@ -227,10 +209,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "payment_account_id": 1334083
       },
       "category": "Payment Account"
@@ -245,10 +223,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "payment_type_id": 4,
         "is_refundable": false,
         "account_nickname": "test12",
@@ -273,10 +247,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529
       },
       "category": "Payment Account"
     },
@@ -289,10 +259,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529
       },
       "category": "Settings"
     },
@@ -305,10 +271,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "payment_account_id": 1321430
       },
       "category": "MoneyGram"
@@ -323,10 +285,6 @@
         "Accept": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "customer_payment_account_id": "1334096",
         "description": "Master Card",
         "agrees_to_fees": true,
@@ -348,10 +306,6 @@
         "Accept": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529
       },
       "category": "Payment"
     },
@@ -365,10 +319,6 @@
         "Accept": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "payment_ids": "1575816881"
       },
       "category": "Payment"
@@ -383,10 +333,6 @@
         "Accept": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529
       },
       "category": "Payment"
     },
@@ -400,10 +346,6 @@
         "Accept": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "description": "Test Payment from flex_id=5555555",
         "agrees_to_fees": true,
         "payment_amount": 1.2,
@@ -424,10 +366,6 @@
         "Accept": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "cancellation_reason": "testing cancel",
         "payment_id": 1575833457
       },
@@ -443,10 +381,6 @@
         "Accept": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "id": 253657,
         "payment_account_id": 1318241,
         "agrees_to_terms": true
@@ -462,10 +396,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529
       },
       "category": "Resident"
     },
@@ -478,10 +408,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529
       },
       "category": "Payment"
     },
@@ -494,10 +420,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "payment_type_id": 4,
         "bank_info": {
           "name_on_account": "Flex Test Account-1",
@@ -519,10 +441,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "scheduled_payment_id": 263866
       },
       "category": "Auto Payment"
@@ -536,10 +454,26 @@
         "Content-Type": "application/json"
       },
       "body": {
+        
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "18a",
+      "name": "Approve Split Auto Payment",
+      "endpoint": "/autopayments/approveSplitAutoPayment",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
         "cid": 4547,
         "property_id": 1065678,
+        "id": 267064,
         "customer_id": 32135986,
-        "lease_id": 15794529
+        "lease_id": 15794529,
+        "payment_account_id": 268308,
+        "agrees_to_terms": true
       },
       "category": "Auto Payment"
     },
@@ -549,13 +483,12 @@
       "endpoint": "/exapi/?controller=add_auto_payment",
       "method": "POST",
       "headers": {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "x-client-type": "mobile-ios"
       },
-      "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
+      "bodies": [{
+        "name": "Monthly",
+        "body": {
         "payment_type_id": 4,
         "agrees_to_terms": true,
         "agrees_to_fees": true,
@@ -568,7 +501,61 @@
           "max_payment_amount": "0",
           "is_variable_amount": true
         }
+      }
       },
+      {
+        "name": "Split",
+        "body": {
+          "payment_type_id": 5,
+          "agrees_to_terms": true,
+          "agrees_to_fees": true,
+          "start_date": "2025-12-21",
+          "end_date": "2026-07-14",
+          "payment_account_id": 1330701,
+         "split": {
+            "payment_amount": 10,
+            "payment_amount_rate": 100,
+            "roommate_payments": [
+              {
+                "customer_id": 32135986,
+                "payment_amount": 5,
+                "payment_amount_rate": 50
+              },
+              {
+                "customer_id": 32133978,
+                "payment_amount": 5,
+                "payment_amount_rate": 50
+              }
+            ]
+          }
+        
+        }
+    },
+    {
+      "name": "Bimonthly",
+        "body": {
+        "payment_type_id": 5,
+        "agrees_to_terms": true,
+        "agrees_to_fees": true,
+        "start_date": "2025-12-21",
+        "end_date": "2026-07-14",
+        "payment_account_id": 1330701,
+       "bimonthly": {
+          "first_payment": {
+            "id": 0,
+            "start_date": "2026-01-07",
+            "max_payment_amount":1
+          },
+          "second_payment": {
+            "id": 0,
+            "start_date": "2026-01-15",
+            "max_payment_amount": 2
+          }
+        }
+      }
+    }
+      ],
+      
       "category": "Auto Payment"
     },
     {
@@ -596,10 +583,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529
       },
       "category": "Settings"
     },
@@ -612,10 +595,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529
       },
       "category": "Settings"
     },
@@ -628,10 +607,6 @@
         "Content-Type": "application/json"
       },
       "body": {
-        "cid": 4547,
-        "property_id": 1065678,
-        "customer_id": 32135986,
-        "lease_id": 15794529,
         "payment_type_id": 6,
         "card_info": {
           "is_debit_card": "false",

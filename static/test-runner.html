@@ -437,6 +437,157 @@
             font-weight: 600;
             color: #667eea;
         }
+
+        .workflow-results {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .workflow-results.show {
+            display: block;
+        }
+
+        .workflow-results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .workflow-results-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .workflow-status {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .workflow-status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .workflow-status.failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .workflow-step {
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            background: #f9fafb;
+        }
+
+        .workflow-step.success {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .workflow-step.failed {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+
+        .workflow-step.blocked {
+            border-left-color: #d50009;
+            background: #fff5f5;
+        }
+
+        .workflow-step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .workflow-step-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .workflow-step-status {
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .workflow-step-status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .workflow-step-status.failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .workflow-step-details {
+            margin-top: 15px;
+        }
+
+        .workflow-step-detail-row {
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+
+        .workflow-step-detail-label {
+            font-weight: 600;
+            color: #4b5563;
+            margin-right: 8px;
+        }
+
+        .workflow-step-detail-value {
+            color: #6b7280;
+        }
+
+        .workflow-step-response {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .workflow-step-response pre {
+            margin: 0;
+            padding: 0;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            color: #374151;
+        }
+
+        .workflow-close-btn {
+            background: #e5e7eb;
+            color: #374151;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .workflow-close-btn:hover {
+            background: #d1d5db;
+        }
     </style>
 </head>
 <body>
@@ -448,6 +599,15 @@
 
         <div class="controls">
             <div style="display: flex; align-items: center; gap: 10px;">
+                <select id="executionMode" onchange="changeExecutionMode()" style="padding: 10px 20px; border: 2px solid #667eea; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: white; min-width: 200px;">
+                    <option value="apis">Execute APIs</option>
+                    <option value="workflow">Execute API Workflow</option>
+                </select>
+                <select id="workflowSelector" onchange="changeWorkflow()" style="padding: 10px 20px; border: 2px solid #667eea; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: white; min-width: 250px; display: none;">
+                    <option value="">Select Workflow...</option>
+                    <option value="auto-payment">Auto Payment Workflow</option>
+                    <option value="payment-account">Payment Account Workflow</option>
+                </select>
                 <select id="envSelector" onchange="changeEnvironment()" style="padding: 10px 20px; border: 2px solid #667eea; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; background: white; min-width: 250px;">
                     <option value="">Loading...</option>
                 </select>
@@ -456,6 +616,9 @@
             
             <button class="btn btn-primary" onclick="runAllTests()" id="runAllBtn">
                 ▶ Run All Tests
+            </button>
+            <button class="btn btn-primary" onclick="runWorkflow()" id="runWorkflowBtn" style="display: none;">
+                ▶ Run Workflow
             </button>
             <button class="btn btn-primary" onclick="clearResults()" id="clearBtn">
                 🗑️ Clear
@@ -505,6 +668,19 @@
         <div class="loading" id="loading">Loading test cases...</div>
         
         <div class="test-grid" id="testGrid" style="display: none;"></div>
+
+        <div class="workflow-results" id="workflowResults">
+            <div class="workflow-results-header">
+                <div>
+                    <div class="workflow-results-title" id="workflowResultsTitle">Workflow Results</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span class="workflow-status" id="workflowStatus">Running</span>
+                    <button class="workflow-close-btn" onclick="closeWorkflowResults()">✕ Close</button>
+                </div>
+            </div>
+            <div id="workflowResultsContent"></div>
+        </div>
     </div>
 
     <script>
@@ -513,6 +689,8 @@
         let currentFilter = 'all';
         let environments = [];
         let currentEnvironment = 'capricorn-trunk';
+        let executionMode = 'apis'; // 'apis' or 'workflow'
+        let selectedWorkflow = '';
 
         async function loadEnvironments() {
             try {
@@ -547,6 +725,55 @@
             }
         }
 
+        function changeExecutionMode() {
+            const modeSelector = document.getElementById('executionMode');
+            executionMode = modeSelector.value;
+            
+            const workflowSelector = document.getElementById('workflowSelector');
+            const runWorkflowBtn = document.getElementById('runWorkflowBtn');
+            const runAllBtn = document.getElementById('runAllBtn');
+            const testGrid = document.getElementById('testGrid');
+            const loading = document.getElementById('loading');
+            const filterGroup = document.querySelector('.filter-group');
+            const summary = document.querySelector('.summary');
+            
+                if (executionMode === 'workflow') {
+                workflowSelector.style.display = 'block';
+                runWorkflowBtn.style.display = 'inline-block';
+                runAllBtn.style.display = 'none';
+                testGrid.style.display = 'none';
+                loading.style.display = 'none';
+                if (filterGroup) filterGroup.style.display = 'none';
+                if (summary) summary.style.display = 'none';
+                // Reset workflow selector
+                selectedWorkflow = '';
+                workflowSelector.value = '';
+                // Hide workflow results when switching away
+                closeWorkflowResults();
+            } else {
+                workflowSelector.style.display = 'none';
+                runWorkflowBtn.style.display = 'none';
+                runAllBtn.style.display = 'inline-block';
+                if (filterGroup) filterGroup.style.display = 'flex';
+                if (summary) summary.style.display = 'grid';
+                // Hide workflow results when switching to APIs mode
+                closeWorkflowResults();
+                // Reload test cases if they were loaded before
+                if (testCases.length > 0) {
+                    testGrid.style.display = 'grid';
+                    loading.style.display = 'none';
+                } else {
+                    loading.style.display = 'block';
+                    testGrid.style.display = 'none';
+                }
+            }
+        }
+
+        function changeWorkflow() {
+            const selector = document.getElementById('workflowSelector');
+            selectedWorkflow = selector.value;
+        }
+
         async function changeEnvironment() {
             const selector = document.getElementById('envSelector');
             currentEnvironment = selector.value;
@@ -558,8 +785,10 @@
             testResults = {};
             updateSummary();
             
-            // Reload test cases for new environment
-            await loadTestCases();
+            // Reload test cases for new environment only if in APIs mode
+            if (executionMode === 'apis') {
+                await loadTestCases();
+            }
         }
 
         function updateEnvironmentColor() {
@@ -1627,6 +1856,315 @@
             document.body.removeChild(link);
             
             console.log(`📥 Downloaded report: ${filename}`);
+        }
+
+        function closeWorkflowResults() {
+            const resultsDiv = document.getElementById('workflowResults');
+            resultsDiv.classList.remove('show');
+        }
+
+        function displayWorkflowResults(result) {
+            const resultsDiv = document.getElementById('workflowResults');
+            const resultsTitle = document.getElementById('workflowResultsTitle');
+            const resultsStatus = document.getElementById('workflowStatus');
+            const resultsContent = document.getElementById('workflowResultsContent');
+            
+            // Get workflow name
+            const workflowName = selectedWorkflow === 'auto-payment' ? 'Auto Payment Workflow' : selectedWorkflow;
+            resultsTitle.textContent = `${workflowName} - Results`;
+            
+            // Set overall status
+            if (result.success) {
+                resultsStatus.textContent = '✅ Success';
+                resultsStatus.className = 'workflow-status success';
+            } else {
+                resultsStatus.textContent = '❌ Failed';
+                resultsStatus.className = 'workflow-status failed';
+            }
+            
+            // Build content HTML
+            let contentHtml = '';
+            
+            if (result.error && !result.success) {
+                contentHtml += `
+                    <div class="workflow-step failed">
+                        <div class="workflow-step-header">
+                            <div class="workflow-step-name">Error</div>
+                            <span class="workflow-step-status failed">Failed</span>
+                        </div>
+                        <div class="workflow-step-details">
+                            <div class="workflow-step-detail-row">
+                                <span class="workflow-step-detail-label">Error Message:</span>
+                                <span class="workflow-step-detail-value">${result.error || 'Unknown error'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Display all steps
+            if (result.steps && result.steps.length > 0) {
+                result.steps.forEach((step, idx) => {
+                    const stepClass = step.blocked ? 'blocked' : (step.success ? 'success' : 'failed');
+                    const stepStatusText = step.blocked ? '🔴 Blocked' : (step.success ? '✅ Success' : '❌ Failed');
+                    const stepStatusClass = step.blocked ? 'blocked' : (step.success ? 'success' : 'failed');
+                    
+                    let stepHtml = `
+                        <div class="workflow-step ${stepClass}">
+                            <div class="workflow-step-header">
+                                <div class="workflow-step-name">Step ${idx + 1}: ${step.name}</div>
+                                <span class="workflow-step-status ${stepStatusClass}">${stepStatusText}</span>
+                            </div>
+                            <div class="workflow-step-details">
+                    `;
+                    
+                    // Add message if available
+                    if (step.message) {
+                        stepHtml += `
+                            <div class="workflow-step-detail-row">
+                                <span class="workflow-step-detail-label">Message:</span>
+                                <span class="workflow-step-detail-value">${step.message}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add error if available
+                    if (step.error) {
+                        stepHtml += `
+                            <div class="workflow-step-detail-row">
+                                <span class="workflow-step-detail-label">Error:</span>
+                                <span class="workflow-step-detail-value" style="color: #ef4444;">${step.error}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    // Add response details if available
+                    if (step.response) {
+                        const response = step.response;
+                        
+                        if (response.status_code) {
+                            stepHtml += `
+                                <div class="workflow-step-detail-row">
+                                    <span class="workflow-step-detail-label">Status Code:</span>
+                                    <span class="workflow-step-detail-value">${response.status_code}</span>
+                                </div>
+                            `;
+                        }
+                        
+                        if (response.response_time_ms) {
+                            stepHtml += `
+                                <div class="workflow-step-detail-row">
+                                    <span class="workflow-step-detail-label">Response Time:</span>
+                                    <span class="workflow-step-detail-value">${response.response_time_ms}ms</span>
+                                </div>
+                            `;
+                        }
+                        
+                        if (response.response_data) {
+                            stepHtml += `
+                                <div class="workflow-step-response">
+                                    <div class="workflow-step-detail-label" style="margin-bottom: 10px;">Response Data:</div>
+                                    <pre>${JSON.stringify(response.response_data, null, 2)}</pre>
+                                </div>
+                            `;
+                        }
+                        
+                        if (response.error) {
+                            stepHtml += `
+                                <div class="workflow-step-detail-row">
+                                    <span class="workflow-step-detail-label">Error:</span>
+                                    <span class="workflow-step-detail-value" style="color: #ef4444;">${response.error}</span>
+                                </div>
+                            `;
+                        }
+                    }
+                    
+                    stepHtml += `
+                            </div>
+                        </div>
+                    `;
+                    
+                    contentHtml += stepHtml;
+                });
+            }
+            
+            // Add summary if available
+            if (result.summary) {
+                const summary = result.summary;
+                const params = summary.request_params || {};
+                
+                let summaryHtml = `
+                    <div style="margin-top: 30px; padding: 25px; background: #f9fafb; border-radius: 8px; border: 2px solid #667eea;">
+                        <h3 style="margin: 0 0 20px 0; color: #667eea; font-size: 20px; font-weight: 700;">Workflow Summary</h3>
+                        <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #e5e7eb;">
+                            <strong style="color: #374151; font-size: 14px;">Request For:</strong>
+                            <div style="margin-top: 8px; font-family: monospace; font-size: 13px; color: #6b7280;">
+                                CID: ${params.cid || 'N/A'}<br>
+                                Property_id: ${params.property_id || 'N/A'}<br>
+                                customer_id: ${params.customer_id || 'N/A'}<br>
+                                lease_id: ${params.lease_id || 'N/A'}
+                            </div>
+                        </div>
+                `;
+                
+                // Auto Payment Workflow Summary
+                if (summary.get_auto_payments !== undefined) {
+                    // getAutoPayments summary
+                    const getAutoPayments = summary.get_auto_payments || {};
+                    summaryHtml += `
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #374151;">getAutoPayments:</strong> 
+                            <span style="color: ${getAutoPayments.status === 'Working' ? '#10b981' : '#ef4444'}; font-weight: 600;">${getAutoPayments.status}</span><br>
+                            <div style="margin-left: 20px; margin-top: 5px; font-family: monospace; font-size: 12px; color: #6b7280;">
+                                Monthly: ${getAutoPayments.monthly_ids && getAutoPayments.monthly_ids.length > 0 ? getAutoPayments.monthly_ids.join(', ') : '<ID>'}<br>
+                                Bimonthly: ${getAutoPayments.bimonthly_ids && getAutoPayments.bimonthly_ids.length > 0 ? getAutoPayments.bimonthly_ids.join(', ') : '<ID>'}<br>
+                                Split: ${getAutoPayments.split_ids && getAutoPayments.split_ids.length > 0 ? getAutoPayments.split_ids.join(', ') : '<ID>'}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // DeleteAutoPayment summary
+                    const deleteAutoPayment = summary.delete_auto_payment || {};
+                    summaryHtml += `
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #374151;">DeleteAutoPayment:</strong> 
+                            <span style="color: ${deleteAutoPayment.status === 'Working' || deleteAutoPayment.status === 'Skipped (No payments to delete)' ? '#10b981' : '#ef4444'}; font-weight: 600;">${deleteAutoPayment.status}</span><br>
+                            <div style="margin-left: 20px; margin-top: 5px; font-family: monospace; font-size: 12px; color: #6b7280;">
+                                Monthly: ${deleteAutoPayment.monthly_ids && deleteAutoPayment.monthly_ids.length > 0 ? deleteAutoPayment.monthly_ids.join(', ') : '<ID>'}<br>
+                                Bimonthly: ${deleteAutoPayment.bimonthly_ids && deleteAutoPayment.bimonthly_ids.length > 0 ? deleteAutoPayment.bimonthly_ids.join(', ') : '<ID>'}<br>
+                                Split: ${deleteAutoPayment.split_ids && deleteAutoPayment.split_ids.length > 0 ? deleteAutoPayment.split_ids.join(', ') : '<ID>'}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // AddAutoPayment summary
+                    const addAutoPayment = summary.add_auto_payment || {};
+                    summaryHtml += `
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #374151;">AddAutoPayment:</strong> 
+                            <span style="color: ${addAutoPayment.status === 'Working' ? '#10b981' : '#ef4444'}; font-weight: 600;">${addAutoPayment.status}</span><br>
+                            <div style="margin-left: 20px; margin-top: 5px; font-family: monospace; font-size: 12px; color: #6b7280;">
+                                Monthly: ${addAutoPayment.monthly_ids && addAutoPayment.monthly_ids.length > 0 ? addAutoPayment.monthly_ids.join(', ') : '<ID>'}<br>
+                                Bimonthly: ${addAutoPayment.bimonthly_ids && addAutoPayment.bimonthly_ids.length > 0 ? addAutoPayment.bimonthly_ids.join(', ') : '<ID>'}<br>
+                                Split: ${addAutoPayment.split_ids && addAutoPayment.split_ids.length > 0 ? addAutoPayment.split_ids.join(', ') : '<ID>'}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // approveSplitAutoPayment summary
+                    const approveSplit = summary.approve_split_auto_payment || {};
+                    summaryHtml += `
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #374151;">approveSplitAutoPayment:</strong> 
+                            <span style="color: ${approveSplit.status === 'Working' ? '#10b981' : '#ef4444'}; font-weight: 600;">${approveSplit.status}</span><br>
+                            <div style="margin-left: 20px; margin-top: 5px; font-family: monospace; font-size: 12px; color: #6b7280;">
+                                ID: ${approveSplit.id || '<ID>'}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                // Payment Account Workflow Summary
+                if (summary.get_payment_accounts !== undefined) {
+                    // getPaymentAccounts summary
+                    const getPaymentAccounts = summary.get_payment_accounts || {};
+                    summaryHtml += `
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #374151;">getPaymentAccounts:</strong> 
+                            <span style="color: ${getPaymentAccounts.status === 'Working' ? '#10b981' : '#ef4444'}; font-weight: 600;">${getPaymentAccounts.status}</span><br>
+                            <div style="margin-left: 20px; margin-top: 5px; font-family: monospace; font-size: 12px; color: #6b7280;">
+                                Payment Account IDs: ${getPaymentAccounts.payment_account_ids && getPaymentAccounts.payment_account_ids.length > 0 ? getPaymentAccounts.payment_account_ids.join(', ') : '<ID>'}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // DeletePaymentAccount summary
+                    const deletePaymentAccount = summary.delete_payment_account || {};
+                    summaryHtml += `
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #374151;">DeletePaymentAccount:</strong> 
+                            <span style="color: ${deletePaymentAccount.status === 'Working' || deletePaymentAccount.status === 'Skipped (No accounts to delete)' ? '#10b981' : '#ef4444'}; font-weight: 600;">${deletePaymentAccount.status}</span><br>
+                            <div style="margin-left: 20px; margin-top: 5px; font-family: monospace; font-size: 12px; color: #6b7280;">
+                                Payment Account IDs: ${deletePaymentAccount.payment_account_ids && deletePaymentAccount.payment_account_ids.length > 0 ? deletePaymentAccount.payment_account_ids.join(', ') : '<ID>'}
+                            </div>
+                        </div>
+                    `;
+                    
+                    // AddPaymentAccount summary
+                    const addPaymentAccount = summary.add_payment_account || {};
+                    summaryHtml += `
+                        <div style="margin-bottom: 15px;">
+                            <strong style="color: #374151;">AddPaymentAccount:</strong> 
+                            <span style="color: ${addPaymentAccount.status === 'Working' ? '#10b981' : '#ef4444'}; font-weight: 600;">${addPaymentAccount.status}</span><br>
+                            <div style="margin-left: 20px; margin-top: 5px; font-family: monospace; font-size: 12px; color: #6b7280;">
+                                Payment Account IDs: ${addPaymentAccount.payment_account_ids && addPaymentAccount.payment_account_ids.length > 0 ? addPaymentAccount.payment_account_ids.join(', ') : '<ID>'}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                summaryHtml += `</div>`;
+                contentHtml += summaryHtml;
+            }
+            
+            // Add timestamp if available
+            if (result.timestamp) {
+                const timestamp = new Date(result.timestamp).toLocaleString();
+                contentHtml += `
+                    <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
+                        Executed at: ${timestamp}
+                    </div>
+                `;
+            }
+            
+            resultsContent.innerHTML = contentHtml;
+            resultsDiv.classList.add('show');
+            
+            // Scroll to results
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        async function runWorkflow() {
+            if (!selectedWorkflow) {
+                alert('Please select a workflow first!');
+                return;
+            }
+            
+            const btn = document.getElementById('runWorkflowBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Running...';
+            
+            // Show results container with loading state
+            const resultsDiv = document.getElementById('workflowResults');
+            const resultsContent = document.getElementById('workflowResultsContent');
+            resultsContent.innerHTML = '<div style="text-align: center; padding: 40px; color: #6b7280;"><div class="spinner" style="margin: 0 auto 20px;"></div>Running workflow...</div>';
+            resultsDiv.classList.add('show');
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            
+            try {
+                const response = await fetch('/api/run-workflow', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        environment: currentEnvironment,
+                        workflow: selectedWorkflow
+                    })
+                });
+                
+                const result = await response.json();
+                displayWorkflowResults(result);
+            } catch (error) {
+                displayWorkflowResults({
+                    success: false,
+                    error: error.message,
+                    steps: []
+                });
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '▶ Run Workflow';
+            }
         }
 
         // Load environments and tests on page load

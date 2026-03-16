@@ -1,5 +1,7 @@
 {
   "base_url": "https://us-residentpay-external.entrata.com",
+  "common_params": {
+  },
   "test_cases": [
     {
       "id": "sp_1",
@@ -374,6 +376,25 @@
         "property_id": 28007,
         "customer_id": 32073949,
         "lease_id": 15585008
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "sp_6a",
+      "name": "Approve Split Auto Payment",
+      "endpoint": "/autopayments/approveSplitAutoPayment",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "id": 267064,
+        "customer_id": 32073949,
+        "lease_id": 15585008,
+        "payment_account_id": 268308,
+        "agrees_to_terms": true
       },
       "category": "Auto Payment"
     },

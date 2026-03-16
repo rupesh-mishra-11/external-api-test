@@ -1,5 +1,11 @@
 {
 "base_url": "https://us-residentpay-external.s01a0001.entratastage.com",
+  "common_params": {
+    "cid": 1995,
+    "property_id": 28007,
+    "customer_id": 6358524,
+    "lease_id": 5885182
+  },
   "test_cases": [
     {
       "id": "ss_1",
@@ -7,7 +13,7 @@
       "endpoint": "/addPaymentAccount",
       "method": "PUT",
       "headers": {
-        "x-client-type": "mobile",
+        "x-client-type": "mobile-ios",
         "Content-Type": "application/json"
       },
       "body": {
@@ -203,6 +209,25 @@
         "property_id": 28007,
         "customer_id": 31877269,
         "lease_id": 15429091
+      },
+      "category": "Auto Payment"
+    },
+    {
+      "id": "ss_7a",
+      "name": "Approve Split Auto Payment",
+      "endpoint": "/autopayments/approveSplitAutoPayment",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "cid": 1995,
+        "property_id": 28007,
+        "id": 267064,
+        "customer_id": 31877269,
+        "lease_id": 15429091,
+        "payment_account_id": 268308,
+        "agrees_to_terms": true
       },
       "category": "Auto Payment"
     },

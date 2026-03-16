@@ -59,7 +59,7 @@ def load_auth_config():
         'environments': {},
         'global': {
             'custom_headers': {
-                'x-client-type': 'mobile-android'
+                'x-client-type': 'web'
             }
         }
     }
@@ -859,6 +859,31 @@ def apply_auto_payment_config(request_body: Dict[str, Any], auto_payment_config:
     return request_body
 
 
+def merge_common_params(request_body: Dict[str, Any], common_params: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Merge common parameters into request body.
+    Common params are merged first, then request_body values override them.
+    
+    Args:
+        request_body: The request body to merge into
+        common_params: Common parameters from test case file (cid, property_id, customer_id, lease_id)
+    
+    Returns:
+        Merged request body with common params applied
+    """
+    if not isinstance(request_body, dict):
+        return request_body
+    
+    if not isinstance(common_params, dict):
+        return request_body
+    
+    # Start with common params, then override with request_body values
+    merged = common_params.copy()
+    merged.update(request_body)
+    
+    return merged
+
+
 def apply_make_payment_config(request_body: Dict[str, Any], make_payment_config: Dict[str, Any]) -> Dict[str, Any]:
     """
     Apply make payment configuration to request body:
@@ -1095,6 +1120,7 @@ def run_single_test(test_id):
             return jsonify({'error': 'Test case not found'}), 404
         
         base_url = test_data['base_url']
+        common_params = test_data.get('common_params', {})
         results = []
         
         # Check if test case has multiple bodies (bodies array)
@@ -1106,11 +1132,11 @@ def run_single_test(test_id):
                 if isinstance(body_config, dict):
                     if 'body' in body_config:
                         scenario_name = body_config.get('name', f'Scenario {idx + 1}')
-                        request_body = body_config['body']
+                        request_body = body_config['body'].copy() if isinstance(body_config['body'], dict) else body_config['body']
                     else:
                         # Direct body object
                         scenario_name = f'Scenario {idx + 1}'
-                        request_body = body_config
+                        request_body = body_config.copy() if isinstance(body_config, dict) else body_config
                 else:
                     # Invalid format
                     results.append({
@@ -1122,6 +1148,10 @@ def run_single_test(test_id):
                         'timestamp': datetime.utcnow().isoformat()
                     })
                     continue
+                
+                # Merge common params into request body
+                if isinstance(request_body, dict):
+                    request_body = merge_common_params(request_body, common_params)
                 
                 # Apply auto payment config if provided (for Add Auto Payment)
                 # Always apply dates for Add Auto Payment, even if config is empty
@@ -1185,6 +1215,10 @@ def run_single_test(test_id):
                 request_body = {}
             else:
                 request_body = request_body.copy()
+            
+            # Merge common params into request body
+            if isinstance(request_body, dict):
+                request_body = merge_common_params(request_body, common_params)
             
             # Check if payment_account_ids are provided in the request (for Delete Payment Account)
             payment_account_ids = data.get('payment_account_ids', '')
@@ -1363,6 +1397,7 @@ def run_all_tests():
         
         results = []
         base_url = test_data['base_url']
+        common_params = test_data.get('common_params', {})
         
         for test_case in test_data['test_cases']:
             # Check if test case has multiple bodies (bodies array)
@@ -1374,11 +1409,11 @@ def run_all_tests():
                     if isinstance(body_config, dict):
                         if 'body' in body_config:
                             scenario_name = body_config.get('name', f'Scenario {idx + 1}')
-                            request_body = body_config['body']
+                            request_body = body_config['body'].copy() if isinstance(body_config['body'], dict) else body_config['body']
                         else:
                             # Direct body object
                             scenario_name = f'Scenario {idx + 1}'
-                            request_body = body_config
+                            request_body = body_config.copy() if isinstance(body_config, dict) else body_config
                     else:
                         # Invalid format
                         results.append({
@@ -1391,6 +1426,10 @@ def run_all_tests():
                             'timestamp': datetime.utcnow().isoformat()
                         })
                         continue
+                    
+                    # Merge common params into request body
+                    if isinstance(request_body, dict):
+                        request_body = merge_common_params(request_body, common_params)
                     
                     # Validate CID for production environments
                     is_valid, error_message = validate_production_cid(request_body, env_id)
@@ -1418,7 +1457,11 @@ def run_all_tests():
                     results.append(result)
             else:
                 # Single body - backward compatibility
-                request_body = test_case.get('body', {})
+                request_body = test_case.get('body', {}).copy()
+                
+                # Merge common params into request body
+                if isinstance(request_body, dict):
+                    request_body = merge_common_params(request_body, common_params)
                 
                 # Validate CID for production environments
                 is_valid, error_message = validate_production_cid(request_body, env_id)
@@ -1464,6 +1507,1066 @@ def run_all_tests():
     except Exception as e:
         logger.error(f'Error running all tests: {e}')
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/run-workflow', methods=['POST'])
+def run_workflow():
+    """Execute API workflows. Currently supports Auto Payment Workflow."""
+    try:
+        # Get environment and workflow from request
+        data = request.get_json() or {}
+        env_id = data.get('environment', 'capricorn-trunk')
+        workflow = data.get('workflow', '')
+        
+        if not workflow:
+            return jsonify({'error': 'Workflow not specified'}), 400
+        
+        # Load environments config
+        with open('environments.json', 'r') as f:
+            env_config = json.load(f)
+        
+        # Find the environment
+        env = next((e for e in env_config['environments'] if e['id'] == env_id), None)
+        if not env:
+            return jsonify({'error': f'Environment {env_id} not found'}), 404
+        
+        # Load test cases for this environment
+        test_cases_file = env['test_cases_file']
+        with open(test_cases_file, 'r') as f:
+            test_data = json.load(f)
+        
+        base_url = test_data['base_url']
+        common_params = test_data.get('common_params', {})
+        steps = []
+        
+        if workflow == 'auto-payment':
+            # Auto Payment Workflow:
+            # 1. Call getAutoPayments
+            # 2. If any records exist with monthly, bimonthly, or split, delete all by calling deleteAutoPayment
+            # 3. Call getPaymentAccounts to get payment_account_id and payment_type_id
+            # 4. Then call addAutoPayment with the extracted values
+            
+            # Initialize summary tracking
+            workflow_summary = {
+                'request_params': {},
+                'get_auto_payments': {'status': 'Not Executed', 'monthly_ids': [], 'bimonthly_ids': [], 'split_ids': []},
+                'delete_auto_payment': {'status': 'Not Executed', 'monthly_ids': [], 'bimonthly_ids': [], 'split_ids': []},
+                'add_auto_payment': {'status': 'Not Executed', 'monthly_ids': [], 'bimonthly_ids': [], 'split_ids': []},
+                'approve_split_auto_payment': {'status': 'Not Executed', 'id': None}
+            }
+            
+            # Find test cases
+            get_auto_payments_test = next(
+                (tc for tc in test_data['test_cases'] 
+                 if 'get auto payments' in tc.get('name', '').lower()),
+                None
+            )
+            delete_auto_payment_test = next(
+                (tc for tc in test_data['test_cases'] 
+                 if 'delete auto payment' in tc.get('name', '').lower()),
+                None
+            )
+            get_payment_accounts_test = next(
+                (tc for tc in test_data['test_cases'] 
+                 if 'get payment accounts' in tc.get('name', '').lower()),
+                None
+            )
+            add_auto_payment_test = next(
+                (tc for tc in test_data['test_cases'] 
+                 if 'add auto payment' in tc.get('name', '').lower()),
+                None
+            )
+            approve_split_auto_payment_test = next(
+                (tc for tc in test_data['test_cases'] 
+                 if 'approve split auto payment' in tc.get('name', '').lower()),
+                None
+            )
+            
+            if not get_auto_payments_test:
+                return jsonify({'error': 'Get Auto Payments test case not found'}), 404
+            if not delete_auto_payment_test:
+                return jsonify({'error': 'Delete Auto Payment test case not found'}), 404
+            if not get_payment_accounts_test:
+                return jsonify({'error': 'Get Payment Accounts test case not found'}), 404
+            if not add_auto_payment_test:
+                return jsonify({'error': 'Add Auto Payment test case not found'}), 404
+            if not approve_split_auto_payment_test:
+                return jsonify({'error': 'Approve Split Auto Payment test case not found'}), 404
+            
+            # Step 1: Get Auto Payments
+            logger.info('🔄 Workflow: Step 1 - Getting auto payments...')
+            
+            # Handle both single body and bodies array
+            get_auto_payments_bodies = get_auto_payments_test.get('bodies', [])
+            if get_auto_payments_bodies:
+                # Use first body from bodies array
+                body_config = get_auto_payments_bodies[0]
+                if isinstance(body_config, dict) and 'body' in body_config:
+                    get_request_body = body_config['body'].copy()
+                else:
+                    get_request_body = body_config.copy() if isinstance(body_config, dict) else {}
+            else:
+                # Fallback to single body
+                get_request_body = get_auto_payments_test.get('body', {}).copy()
+            
+            # Merge common params into request body
+            if isinstance(get_request_body, dict):
+                get_request_body = merge_common_params(get_request_body, common_params)
+            
+            # Store request params for summary (from actual request body that will be sent)
+            workflow_summary['request_params'] = {
+                'cid': get_request_body.get('cid'),
+                'property_id': get_request_body.get('property_id'),
+                'customer_id': get_request_body.get('customer_id'),
+                'lease_id': get_request_body.get('lease_id')
+            }
+            
+            # Validate CID for production environments
+            is_valid, error_message = validate_production_cid(get_request_body, env_id)
+            if not is_valid:
+                return jsonify({
+                    'success': False,
+                    'error': error_message,
+                    'steps': steps
+                }), 403
+            
+            get_result = execute_single_request(
+                get_auto_payments_test, 
+                get_request_body, 
+                base_url, 
+                env_id,
+                'Get Auto Payments'
+            )
+            
+            steps.append({
+                'name': 'Get Auto Payments',
+                'success': get_result.get('success', False),
+                'response': get_result
+            })
+            
+            if not get_result.get('success', False):
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to get auto payments',
+                    'steps': steps
+                }), 500
+            
+            # Step 2: Check response and delete if needed
+            # Response structure: { "success": true, "data": { "monthly": [...], "bimonthly": [...], "split": [...] } }
+            response_data = get_result.get('response_data', {})
+            payments_to_delete = []
+            monthly_ids_found = []
+            bimonthly_ids_found = []
+            split_ids_found = []
+            
+            if isinstance(response_data, dict):
+                data = response_data.get('data', {})
+                
+                # Extract IDs from monthly payments
+                if 'monthly' in data and isinstance(data['monthly'], list):
+                    for monthly_payment in data['monthly']:
+                        if isinstance(monthly_payment, dict):
+                            payment_id = monthly_payment.get('id')
+                            if payment_id:
+                                payments_to_delete.append(payment_id)
+                                monthly_ids_found.append(payment_id)
+                                logger.info(f'Found monthly payment with ID: {payment_id}')
+                
+                # Extract IDs from bimonthly payments (has first_payment.id and second_payment.id)
+                if 'bimonthly' in data and isinstance(data['bimonthly'], list):
+                    for bimonthly_payment in data['bimonthly']:
+                        if isinstance(bimonthly_payment, dict):
+                            # Get first_payment.id
+                            first_payment = bimonthly_payment.get('first_payment', {})
+                            if isinstance(first_payment, dict):
+                                first_id = first_payment.get('id')
+                                if first_id:
+                                    payments_to_delete.append(first_id)
+                                    bimonthly_ids_found.append(first_id)
+                                    logger.info(f'Found bimonthly first payment with ID: {first_id}')
+                            
+                            # Get second_payment.id
+                            second_payment = bimonthly_payment.get('second_payment', {})
+                            if isinstance(second_payment, dict):
+                                second_id = second_payment.get('id')
+                                if second_id:
+                                    payments_to_delete.append(second_id)
+                                    bimonthly_ids_found.append(second_id)
+                                    logger.info(f'Found bimonthly second payment with ID: {second_id}')
+                
+                # Extract IDs from split payments
+                if 'split' in data and isinstance(data['split'], list):
+                    for split_payment in data['split']:
+                        if isinstance(split_payment, dict):
+                            payment_id = split_payment.get('id')
+                            if payment_id:
+                                payments_to_delete.append(payment_id)
+                                split_ids_found.append(payment_id)
+                                logger.info(f'Found split payment with ID: {payment_id}')
+            
+            # Update summary for getAutoPayments
+            if get_result.get('success', False):
+                workflow_summary['get_auto_payments'] = {
+                    'status': 'Working',
+                    'monthly_ids': monthly_ids_found,
+                    'bimonthly_ids': bimonthly_ids_found,
+                    'split_ids': split_ids_found
+                }
+            else:
+                workflow_summary['get_auto_payments']['status'] = 'Failed'
+            
+            # Delete all matching payments
+            deleted_monthly_ids = []
+            deleted_bimonthly_ids = []
+            deleted_split_ids = []
+            
+            if payments_to_delete:
+                logger.info(f'🔄 Workflow: Step 2 - Deleting {len(payments_to_delete)} auto payment(s)...')
+                delete_request_body_base = delete_auto_payment_test.get('body', {}).copy()
+                
+                # Merge common params into base delete request body
+                if isinstance(delete_request_body_base, dict):
+                    delete_request_body_base = merge_common_params(delete_request_body_base, common_params)
+                
+                for payment_id in payments_to_delete:
+                    delete_request_body = delete_request_body_base.copy()
+                    # Track which type of payment is being deleted
+                    if payment_id in monthly_ids_found:
+                        payment_type = 'monthly'
+                    elif payment_id in bimonthly_ids_found:
+                        payment_type = 'bimonthly'
+                    elif payment_id in split_ids_found:
+                        payment_type = 'split'
+                    else:
+                        payment_type = None
+                    delete_request_body['scheduled_payment_id'] = payment_id
+                    
+                    # Validate CID for production environments
+                    is_valid, error_message = validate_production_cid(delete_request_body, env_id)
+                    if not is_valid:
+                        steps.append({
+                            'name': f'Delete Auto Payment (ID: {payment_id})',
+                            'success': False,
+                            'error': error_message,
+                            'blocked': True
+                        })
+                        continue
+                    
+                    delete_result = execute_single_request(
+                        delete_auto_payment_test,
+                        delete_request_body.copy(),
+                        base_url,
+                        env_id,
+                        f'Delete Auto Payment (ID: {payment_id})'
+                    )
+                    
+                    if delete_result.get('success', False):
+                        if payment_type == 'monthly':
+                            deleted_monthly_ids.append(payment_id)
+                        elif payment_type == 'bimonthly':
+                            deleted_bimonthly_ids.append(payment_id)
+                        elif payment_type == 'split':
+                            deleted_split_ids.append(payment_id)
+                    
+                    steps.append({
+                        'name': f'Delete Auto Payment (ID: {payment_id})',
+                        'success': delete_result.get('success', False),
+                        'response': delete_result
+                    })
+                
+                # Update summary for deleteAutoPayment
+                workflow_summary['delete_auto_payment'] = {
+                    'status': 'Working' if len(payments_to_delete) > 0 else 'Skipped',
+                    'monthly_ids': deleted_monthly_ids,
+                    'bimonthly_ids': deleted_bimonthly_ids,
+                    'split_ids': deleted_split_ids
+                }
+            else:
+                logger.info('🔄 Workflow: Step 2 - No auto payments to delete')
+                steps.append({
+                    'name': 'Delete Auto Payments',
+                    'success': True,
+                    'message': 'No auto payments found to delete'
+                })
+                workflow_summary['delete_auto_payment']['status'] = 'Skipped (No payments to delete)'
+            
+            # Step 3: Get Payment Accounts
+            logger.info('🔄 Workflow: Step 3 - Getting payment accounts...')
+            get_payment_accounts_bodies = get_payment_accounts_test.get('bodies', [])
+            
+            if get_payment_accounts_bodies:
+                # Use first body from bodies array
+                body_config = get_payment_accounts_bodies[0]
+                if isinstance(body_config, dict) and 'body' in body_config:
+                    get_payment_accounts_body = body_config['body'].copy()
+                else:
+                    get_payment_accounts_body = body_config.copy() if isinstance(body_config, dict) else {}
+            else:
+                # Fallback to single body
+                get_payment_accounts_body = get_payment_accounts_test.get('body', {}).copy()
+            
+            # Merge common params into request body
+            if isinstance(get_payment_accounts_body, dict):
+                get_payment_accounts_body = merge_common_params(get_payment_accounts_body, common_params)
+            
+            # Validate CID for production environments
+            is_valid, error_message = validate_production_cid(get_payment_accounts_body, env_id)
+            if not is_valid:
+                return jsonify({
+                    'success': False,
+                    'error': error_message,
+                    'steps': steps
+                }), 403
+            
+            get_payment_accounts_result = execute_single_request(
+                get_payment_accounts_test,
+                get_payment_accounts_body,
+                base_url,
+                env_id,
+                'Get Payment Accounts'
+            )
+            
+            steps.append({
+                'name': 'Get Payment Accounts',
+                'success': get_payment_accounts_result.get('success', False),
+                'response': get_payment_accounts_result
+            })
+            
+            if not get_payment_accounts_result.get('success', False):
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to get payment accounts',
+                    'steps': steps
+                }), 500
+            
+            # Extract payment_account_id and payment_type_id from first record
+            payment_accounts_response = get_payment_accounts_result.get('response_data', {})
+            payment_accounts = []
+            
+            if isinstance(payment_accounts_response, dict):
+                if 'payment_accounts' in payment_accounts_response and isinstance(payment_accounts_response['payment_accounts'], list):
+                    payment_accounts = payment_accounts_response['payment_accounts']
+                elif 'data' in payment_accounts_response and isinstance(payment_accounts_response['data'], list):
+                    payment_accounts = payment_accounts_response['data']
+            elif isinstance(payment_accounts_response, list):
+                payment_accounts = payment_accounts_response
+            
+            # Validate that we have at least one payment account
+            if not payment_accounts or len(payment_accounts) == 0:
+                return jsonify({
+                    'success': False,
+                    'error': 'No payment accounts found. Please add a payment account first.',
+                    'steps': steps
+                }), 400
+            
+            # Get first payment account
+            first_payment_account = payment_accounts[0]
+            if not isinstance(first_payment_account, dict):
+                return jsonify({
+                    'success': False,
+                    'error': 'Invalid payment account data structure',
+                    'steps': steps
+                }), 500
+            
+            payment_account_id = first_payment_account.get('id')
+            payment_type_id = first_payment_account.get('payment_type_id')
+            
+            if not payment_account_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'Payment account ID not found in response',
+                    'steps': steps
+                }), 500
+            
+            if not payment_type_id:
+                return jsonify({
+                    'success': False,
+                    'error': 'Payment type ID not found in response',
+                    'steps': steps
+                }), 500
+            
+            logger.info(f'🔄 Workflow: Extracted payment_account_id: {payment_account_id}, payment_type_id: {payment_type_id}')
+            
+            # Step 4: Add Auto Payment - Execute all test cases
+            logger.info('🔄 Workflow: Step 4 - Adding auto payments (all scenarios)...')
+            add_bodies = add_auto_payment_test.get('bodies', [])
+            added_monthly_ids = []
+            added_bimonthly_ids = []
+            added_split_ids = []
+            
+            if add_bodies:
+                # Execute all bodies (Monthly, Split, Bimonthly, etc.)
+                for idx, body_config in enumerate(add_bodies):
+                    # Support both object with 'name' and 'body' or just direct body object
+                    if isinstance(body_config, dict):
+                        if 'body' in body_config:
+                            scenario_name = body_config.get('name', f'Scenario {idx + 1}')
+                            add_request_body = body_config['body'].copy()
+                        else:
+                            # Direct body object
+                            scenario_name = f'Scenario {idx + 1}'
+                            add_request_body = body_config.copy()
+                    else:
+                        # Invalid format - skip
+                        steps.append({
+                            'name': f'Add Auto Payment - Scenario {idx + 1}',
+                            'success': False,
+                            'error': 'Invalid body format',
+                            'response': None
+                        })
+                        continue
+                    
+                    # Merge common params into request body
+                    if isinstance(add_request_body, dict):
+                        add_request_body = merge_common_params(add_request_body, common_params)
+                    
+                    # Apply auto payment config with extracted payment_account_id and payment_type_id
+                    # Use day_offset based on index to ensure different dates for each scenario
+                    auto_payment_config = {
+                        'payment_account_id': payment_account_id,
+                        'payment_type_id': payment_type_id
+                    }
+                    apply_auto_payment_config(add_request_body, auto_payment_config, day_offset=idx)
+                    
+                    # Validate CID for production environments
+                    is_valid, error_message = validate_production_cid(add_request_body, env_id)
+                    if not is_valid:
+                        steps.append({
+                            'name': f'Add Auto Payment - {scenario_name}',
+                            'success': False,
+                            'error': error_message,
+                            'blocked': True,
+                            'response': None
+                        })
+                        continue
+                    
+                    add_result = execute_single_request(
+                        add_auto_payment_test,
+                        add_request_body,
+                        base_url,
+                        env_id,
+                        f'Add Auto Payment - {scenario_name}'
+                    )
+                    
+                    # Extract ID from response if successful
+                    if add_result.get('success', False):
+                        response_data = add_result.get('response_data', {})
+                        if isinstance(response_data, dict):
+                            created_id = response_data.get('id') or response_data.get('scheduled_payment_id')
+                            if created_id:
+                                scenario_lower = scenario_name.lower()
+                                if 'monthly' in scenario_lower:
+                                    added_monthly_ids.append(created_id)
+                                elif 'bimonthly' in scenario_lower:
+                                    added_bimonthly_ids.append(created_id)
+                                elif 'split' in scenario_lower:
+                                    added_split_ids.append(created_id)
+                    
+                    steps.append({
+                        'name': f'Add Auto Payment - {scenario_name}',
+                        'success': add_result.get('success', False),
+                        'response': add_result
+                    })
+                
+                # Update summary for addAutoPayment
+                workflow_summary['add_auto_payment'] = {
+                    'status': 'Working' if len(add_bodies) > 0 else 'Not Executed',
+                    'monthly_ids': added_monthly_ids,
+                    'bimonthly_ids': added_bimonthly_ids,
+                    'split_ids': added_split_ids
+                }
+            else:
+                # Fallback to single body
+                add_request_body = add_auto_payment_test.get('body', {}).copy()
+                
+                # Merge common params into request body
+                if isinstance(add_request_body, dict):
+                    add_request_body = merge_common_params(add_request_body, common_params)
+                
+                # Apply auto payment config with extracted payment_account_id and payment_type_id
+                auto_payment_config = {
+                    'payment_account_id': payment_account_id,
+                    'payment_type_id': payment_type_id
+                }
+                apply_auto_payment_config(add_request_body, auto_payment_config, day_offset=0)
+                
+                # Validate CID for production environments
+                is_valid, error_message = validate_production_cid(add_request_body, env_id)
+                if not is_valid:
+                    return jsonify({
+                        'success': False,
+                        'error': error_message,
+                        'steps': steps
+                    }), 403
+                
+                add_result = execute_single_request(
+                    add_auto_payment_test,
+                    add_request_body,
+                    base_url,
+                    env_id,
+                    'Add Auto Payment'
+                )
+                
+                # Extract ID from response if successful
+                if add_result.get('success', False):
+                    response_data = add_result.get('response_data', {})
+                    if isinstance(response_data, dict):
+                        created_id = response_data.get('id') or response_data.get('scheduled_payment_id')
+                        if created_id:
+                            # Try to determine type from request body
+                            if 'monthly' in add_request_body:
+                                added_monthly_ids.append(created_id)
+                            elif 'bimonthly' in add_request_body:
+                                added_bimonthly_ids.append(created_id)
+                            elif 'split' in add_request_body:
+                                added_split_ids.append(created_id)
+                
+                steps.append({
+                    'name': 'Add Auto Payment',
+                    'success': add_result.get('success', False),
+                    'response': add_result
+                })
+                
+                workflow_summary['add_auto_payment'] = {
+                    'status': 'Working',
+                    'monthly_ids': added_monthly_ids,
+                    'bimonthly_ids': added_bimonthly_ids,
+                    'split_ids': added_split_ids
+                }
+            
+            # Step 5: Get Split Auto Payment and Approve it
+            # First, get auto payments using params from approveSplitAutoPayment to find the split payment
+            logger.info('🔄 Workflow: Step 5 - Getting split auto payment for approval...')
+            approve_request_body = approve_split_auto_payment_test.get('body', {}).copy()
+            
+            # Merge common params into approve request body
+            if isinstance(approve_request_body, dict):
+                approve_request_body = merge_common_params(approve_request_body, common_params)
+            
+            # Build getAutoPayments request using params from approveSplitAutoPayment
+            get_split_request_body = {
+                'cid': approve_request_body.get('cid'),
+                'property_id': approve_request_body.get('property_id'),
+                'customer_id': approve_request_body.get('customer_id'),
+                'lease_id': approve_request_body.get('lease_id')
+            }
+            
+            # Merge common params into get split request body
+            if isinstance(get_split_request_body, dict):
+                get_split_request_body = merge_common_params(get_split_request_body, common_params)
+            
+            # Validate CID for production environments
+            is_valid, error_message = validate_production_cid(get_split_request_body, env_id)
+            if not is_valid:
+                steps.append({
+                    'name': 'Get Split Auto Payment for Approval',
+                    'success': False,
+                    'error': error_message,
+                    'blocked': True,
+                    'response': None
+                })
+            else:
+                get_split_result = execute_single_request(
+                    get_auto_payments_test,
+                    get_split_request_body,
+                    base_url,
+                    env_id,
+                    'Get Split Auto Payment for Approval'
+                )
+                
+                steps.append({
+                    'name': 'Get Split Auto Payment for Approval',
+                    'success': get_split_result.get('success', False),
+                    'response': get_split_result
+                })
+                
+                if get_split_result.get('success', False):
+                    # Extract split payment ID from response
+                    split_payment_id = None
+                    response_data = get_split_result.get('response_data', {})
+                    
+                    if isinstance(response_data, dict):
+                        data = response_data.get('data', {})
+                        if 'split' in data and isinstance(data['split'], list) and len(data['split']) > 0:
+                            # Get the first split payment
+                            first_split = data['split'][0]
+                            if isinstance(first_split, dict):
+                                split_payment_id = first_split.get('id')
+                                logger.info(f'🔄 Workflow: Found split payment ID: {split_payment_id}')
+                    
+                    if split_payment_id:
+                        # Update approve request body with the extracted split payment ID
+                        approve_request_body['id'] = split_payment_id
+                        
+                        # Get payment_account_id from getPaymentAccounts using params from approveSplitAutoPayment
+                        logger.info('🔄 Workflow: Getting payment account for approval...')
+                        get_payment_accounts_for_approve_body = {
+                            'cid': approve_request_body.get('cid'),
+                            'property_id': approve_request_body.get('property_id'),
+                            'customer_id': approve_request_body.get('customer_id'),
+                            'lease_id': approve_request_body.get('lease_id')
+                        }
+                        
+                        # Merge common params into request body
+                        if isinstance(get_payment_accounts_for_approve_body, dict):
+                            get_payment_accounts_for_approve_body = merge_common_params(get_payment_accounts_for_approve_body, common_params)
+                        
+                        # Validate CID for production environments
+                        is_valid, error_message = validate_production_cid(get_payment_accounts_for_approve_body, env_id)
+                        if not is_valid:
+                            steps.append({
+                                'name': 'Get Payment Account for Approval',
+                                'success': False,
+                                'error': error_message,
+                                'blocked': True,
+                                'response': None
+                            })
+                        else:
+                            get_payment_accounts_for_approve_result = execute_single_request(
+                                get_payment_accounts_test,
+                                get_payment_accounts_for_approve_body,
+                                base_url,
+                                env_id,
+                                'Get Payment Account for Approval'
+                            )
+                            
+                            steps.append({
+                                'name': 'Get Payment Account for Approval',
+                                'success': get_payment_accounts_for_approve_result.get('success', False),
+                                'response': get_payment_accounts_for_approve_result
+                            })
+                            
+                            if get_payment_accounts_for_approve_result.get('success', False):
+                                # Extract payment_account_id from first record
+                                payment_accounts_response = get_payment_accounts_for_approve_result.get('response_data', {})
+                                payment_accounts = []
+                                
+                                if isinstance(payment_accounts_response, dict):
+                                    if 'payment_accounts' in payment_accounts_response and isinstance(payment_accounts_response['payment_accounts'], list):
+                                        payment_accounts = payment_accounts_response['payment_accounts']
+                                    elif 'data' in payment_accounts_response and isinstance(payment_accounts_response['data'], list):
+                                        payment_accounts = payment_accounts_response['data']
+                                elif isinstance(payment_accounts_response, list):
+                                    payment_accounts = payment_accounts_response
+                                
+                                if payment_accounts and len(payment_accounts) > 0:
+                                    first_payment_account = payment_accounts[0]
+                                    if isinstance(first_payment_account, dict):
+                                        approve_payment_account_id = first_payment_account.get('id')
+                                        
+                                        if approve_payment_account_id:
+                                            # Update approve request body with the extracted payment_account_id
+                                            approve_request_body['payment_account_id'] = approve_payment_account_id
+                                            logger.info(f'🔄 Workflow: Using payment_account_id: {approve_payment_account_id}')
+                                            
+                                            # Validate CID for production environments
+                                            is_valid, error_message = validate_production_cid(approve_request_body, env_id)
+                                            if not is_valid:
+                                                steps.append({
+                                                    'name': 'Approve Split Auto Payment',
+                                                    'success': False,
+                                                    'error': error_message,
+                                                    'blocked': True,
+                                                    'response': None
+                                                })
+                                            else:
+                                                # Execute approveSplitAutoPayment
+                                                logger.info(f'🔄 Workflow: Step 6 - Approving split auto payment (ID: {split_payment_id}, Payment Account ID: {approve_payment_account_id})...')
+                                                approve_result = execute_single_request(
+                                                    approve_split_auto_payment_test,
+                                                    approve_request_body,
+                                                    base_url,
+                                                    env_id,
+                                                    'Approve Split Auto Payment'
+                                                )
+                                                
+                                                steps.append({
+                                                    'name': 'Approve Split Auto Payment',
+                                                    'success': approve_result.get('success', False),
+                                                    'response': approve_result
+                                                })
+                                                
+                                                # Update summary for approveSplitAutoPayment
+                                                if approve_result.get('success', False):
+                                                    workflow_summary['approve_split_auto_payment'] = {
+                                                        'status': 'Working',
+                                                        'id': split_payment_id
+                                                    }
+                                                else:
+                                                    workflow_summary['approve_split_auto_payment'] = {
+                                                        'status': 'Failed',
+                                                        'id': split_payment_id
+                                                    }
+                                        else:
+                                            steps.append({
+                                                'name': 'Approve Split Auto Payment',
+                                                'success': False,
+                                                'error': 'Payment account ID not found in response',
+                                                'response': None
+                                            })
+                                    else:
+                                        steps.append({
+                                            'name': 'Approve Split Auto Payment',
+                                            'success': False,
+                                            'error': 'Invalid payment account data structure',
+                                            'response': None
+                                        })
+                                else:
+                                    steps.append({
+                                        'name': 'Approve Split Auto Payment',
+                                        'success': False,
+                                        'error': 'No payment accounts found. Please add a payment account first.',
+                                        'response': None
+                                    })
+                            else:
+                                steps.append({
+                                    'name': 'Approve Split Auto Payment',
+                                    'success': False,
+                                    'error': 'Failed to get payment accounts',
+                                    'response': None
+                                })
+                    else:
+                        steps.append({
+                            'name': 'Approve Split Auto Payment',
+                            'success': False,
+                            'error': 'No split auto payment found to approve',
+                            'response': None
+                        })
+                        logger.warning('🔄 Workflow: No split auto payment found in response')
+            
+            # Determine overall success
+            all_success = all(step.get('success', False) for step in steps)
+            
+            return jsonify({
+                'success': all_success,
+                'workflow': workflow,
+                'steps': steps,
+                'summary': workflow_summary,
+                'timestamp': datetime.utcnow().isoformat()
+            }), 200
+        
+        elif workflow == 'payment-account':
+            # Payment Account Workflow:
+            # 1. Call getPaymentAccounts
+            # 2. Delete all payment accounts found
+            # 3. Add Payment Account
+            
+            # Initialize summary tracking
+            workflow_summary = {
+                'request_params': {},
+                'get_payment_accounts': {'status': 'Not Executed', 'payment_account_ids': []},
+                'delete_payment_account': {'status': 'Not Executed', 'payment_account_ids': []},
+                'add_payment_account': {'status': 'Not Executed', 'payment_account_ids': []}
+            }
+            
+            # Find test cases
+            get_payment_accounts_test = next(
+                (tc for tc in test_data['test_cases'] 
+                 if 'get payment accounts' in tc.get('name', '').lower()),
+                None
+            )
+            delete_payment_account_test = next(
+                (tc for tc in test_data['test_cases'] 
+                 if 'delete payment account' in tc.get('name', '').lower()),
+                None
+            )
+            add_payment_account_test = next(
+                (tc for tc in test_data['test_cases'] 
+                 if 'add payment account' in tc.get('name', '').lower()),
+                None
+            )
+            
+            if not get_payment_accounts_test:
+                return jsonify({'error': 'Get Payment Accounts test case not found'}), 404
+            if not delete_payment_account_test:
+                return jsonify({'error': 'Delete Payment Account test case not found'}), 404
+            if not add_payment_account_test:
+                return jsonify({'error': 'Add Payment Account test case not found'}), 404
+            
+            # Step 1: Get Payment Accounts
+            logger.info('🔄 Workflow: Step 1 - Getting payment accounts...')
+            
+            # Handle both single body and bodies array
+            get_payment_accounts_bodies = get_payment_accounts_test.get('bodies', [])
+            if get_payment_accounts_bodies:
+                # Use first body from bodies array
+                body_config = get_payment_accounts_bodies[0]
+                if isinstance(body_config, dict) and 'body' in body_config:
+                    get_request_body = body_config['body'].copy()
+                else:
+                    get_request_body = body_config.copy() if isinstance(body_config, dict) else {}
+            else:
+                # Fallback to single body
+                get_request_body = get_payment_accounts_test.get('body', {}).copy()
+            
+            # Merge common params into request body
+            if isinstance(get_request_body, dict):
+                get_request_body = merge_common_params(get_request_body, common_params)
+            
+            # Store request params for summary
+            workflow_summary['request_params'] = {
+                'cid': get_request_body.get('cid'),
+                'property_id': get_request_body.get('property_id'),
+                'customer_id': get_request_body.get('customer_id'),
+                'lease_id': get_request_body.get('lease_id')
+            }
+            
+            # Validate CID for production environments
+            is_valid, error_message = validate_production_cid(get_request_body, env_id)
+            if not is_valid:
+                return jsonify({
+                    'success': False,
+                    'error': error_message,
+                    'steps': steps,
+                    'summary': workflow_summary
+                }), 403
+            
+            get_result = execute_single_request(
+                get_payment_accounts_test,
+                get_request_body,
+                base_url,
+                env_id,
+                'Get Payment Accounts'
+            )
+            
+            steps.append({
+                'name': 'Get Payment Accounts',
+                'success': get_result.get('success', False),
+                'response': get_result
+            })
+            
+            if not get_result.get('success', False):
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to get payment accounts',
+                    'steps': steps,
+                    'summary': workflow_summary
+                }), 500
+            
+            # Step 2: Extract payment account IDs and delete them
+            payment_accounts_response = get_result.get('response_data', {})
+            payment_accounts = []
+            payment_account_ids_found = []
+            
+            if isinstance(payment_accounts_response, dict):
+                if 'payment_accounts' in payment_accounts_response and isinstance(payment_accounts_response['payment_accounts'], list):
+                    payment_accounts = payment_accounts_response['payment_accounts']
+                elif 'data' in payment_accounts_response and isinstance(payment_accounts_response['data'], list):
+                    payment_accounts = payment_accounts_response['data']
+            elif isinstance(payment_accounts_response, list):
+                payment_accounts = payment_accounts_response
+            
+            # Extract payment account IDs
+            for account in payment_accounts:
+                if isinstance(account, dict):
+                    account_id = account.get('id')
+                    if account_id:
+                        payment_account_ids_found.append(account_id)
+                        logger.info(f'Found payment account with ID: {account_id}')
+            
+            # Update summary for getPaymentAccounts
+            workflow_summary['get_payment_accounts'] = {
+                'status': 'Working',
+                'payment_account_ids': payment_account_ids_found
+            }
+            
+            # Step 3: Delete all payment accounts
+            deleted_payment_account_ids = []
+            
+            if payment_account_ids_found:
+                logger.info(f'🔄 Workflow: Step 2 - Deleting {len(payment_account_ids_found)} payment account(s)...')
+                delete_request_body_base = delete_payment_account_test.get('body', {}).copy()
+                
+                # Merge common params into base delete request body
+                if isinstance(delete_request_body_base, dict):
+                    delete_request_body_base = merge_common_params(delete_request_body_base, common_params)
+                
+                for account_id in payment_account_ids_found:
+                    delete_request_body = delete_request_body_base.copy()
+                    delete_request_body['payment_account_id'] = account_id
+                    
+                    # Validate CID for production environments
+                    is_valid, error_message = validate_production_cid(delete_request_body, env_id)
+                    if not is_valid:
+                        steps.append({
+                            'name': f'Delete Payment Account (ID: {account_id})',
+                            'success': False,
+                            'error': error_message,
+                            'blocked': True,
+                            'response': None
+                        })
+                        continue
+                    
+                    delete_result = execute_single_request(
+                        delete_payment_account_test,
+                        delete_request_body,
+                        base_url,
+                        env_id,
+                        f'Delete Payment Account (ID: {account_id})'
+                    )
+                    
+                    if delete_result.get('success', False):
+                        deleted_payment_account_ids.append(account_id)
+                    
+                    steps.append({
+                        'name': f'Delete Payment Account (ID: {account_id})',
+                        'success': delete_result.get('success', False),
+                        'response': delete_result
+                    })
+                
+                # Update summary for deletePaymentAccount
+                workflow_summary['delete_payment_account'] = {
+                    'status': 'Working',
+                    'payment_account_ids': deleted_payment_account_ids
+                }
+            else:
+                logger.info('🔄 Workflow: Step 2 - No payment accounts to delete')
+                steps.append({
+                    'name': 'Delete Payment Accounts',
+                    'success': True,
+                    'message': 'No payment accounts found to delete'
+                })
+                workflow_summary['delete_payment_account']['status'] = 'Skipped (No accounts to delete)'
+            
+            # Step 4: Add Payment Account - Execute all test cases
+            logger.info('🔄 Workflow: Step 3 - Adding payment accounts (all scenarios)...')
+            add_payment_account_bodies = add_payment_account_test.get('bodies', [])
+            added_payment_account_ids = []
+            
+            if add_payment_account_bodies:
+                # Execute all bodies (ACH Account, Visa Debit Card, Visa Credit Card, etc.)
+                for idx, body_config in enumerate(add_payment_account_bodies):
+                    # Support both object with 'name' and 'body' or just direct body object
+                    if isinstance(body_config, dict):
+                        if 'body' in body_config:
+                            scenario_name = body_config.get('name', f'Scenario {idx + 1}')
+                            add_request_body = body_config['body'].copy()
+                        else:
+                            # Direct body object
+                            scenario_name = f'Scenario {idx + 1}'
+                            add_request_body = body_config.copy()
+                    else:
+                        # Invalid format - skip
+                        steps.append({
+                            'name': f'Add Payment Account - Scenario {idx + 1}',
+                            'success': False,
+                            'error': 'Invalid body format',
+                            'response': None
+                        })
+                        continue
+                    
+                    # Merge common params into request body
+                    if isinstance(add_request_body, dict):
+                        add_request_body = merge_common_params(add_request_body, common_params)
+                    
+                    # Validate CID for production environments
+                    is_valid, error_message = validate_production_cid(add_request_body, env_id)
+                    if not is_valid:
+                        steps.append({
+                            'name': f'Add Payment Account - {scenario_name}',
+                            'success': False,
+                            'error': error_message,
+                            'blocked': True,
+                            'response': None
+                        })
+                        continue
+                    
+                    add_result = execute_single_request(
+                        add_payment_account_test,
+                        add_request_body,
+                        base_url,
+                        env_id,
+                        f'Add Payment Account - {scenario_name}'
+                    )
+                    
+                    # Extract payment account ID from response if successful
+                    if add_result.get('success', False):
+                        response_data = add_result.get('response_data', {})
+                        if isinstance(response_data, dict):
+                            created_id = response_data.get('id') or response_data.get('payment_account_id')
+                            if created_id:
+                                added_payment_account_ids.append(created_id)
+                                logger.info(f'🔄 Workflow: Created payment account with ID: {created_id} ({scenario_name})')
+                    
+                    steps.append({
+                        'name': f'Add Payment Account - {scenario_name}',
+                        'success': add_result.get('success', False),
+                        'response': add_result
+                    })
+                
+                # Update summary for addPaymentAccount
+                workflow_summary['add_payment_account'] = {
+                    'status': 'Working' if len(add_payment_account_bodies) > 0 else 'Not Executed',
+                    'payment_account_ids': added_payment_account_ids
+                }
+            else:
+                # Fallback to single body
+                add_request_body = add_payment_account_test.get('body', {}).copy()
+                
+                # Merge common params into request body
+                if isinstance(add_request_body, dict):
+                    add_request_body = merge_common_params(add_request_body, common_params)
+                
+                # Validate CID for production environments
+                is_valid, error_message = validate_production_cid(add_request_body, env_id)
+                if not is_valid:
+                    return jsonify({
+                        'success': False,
+                        'error': error_message,
+                        'steps': steps,
+                        'summary': workflow_summary
+                    }), 403
+                
+                add_result = execute_single_request(
+                    add_payment_account_test,
+                    add_request_body,
+                    base_url,
+                    env_id,
+                    'Add Payment Account'
+                )
+                
+                steps.append({
+                    'name': 'Add Payment Account',
+                    'success': add_result.get('success', False),
+                    'response': add_result
+                })
+                
+                # Extract payment account ID from response if successful
+                added_payment_account_id = None
+                if add_result.get('success', False):
+                    response_data = add_result.get('response_data', {})
+                    if isinstance(response_data, dict):
+                        added_payment_account_id = response_data.get('id') or response_data.get('payment_account_id')
+                        if added_payment_account_id:
+                            added_payment_account_ids.append(added_payment_account_id)
+                            logger.info(f'🔄 Workflow: Created payment account with ID: {added_payment_account_id}')
+                
+                # Update summary for addPaymentAccount
+                workflow_summary['add_payment_account'] = {
+                    'status': 'Working' if add_result.get('success', False) else 'Failed',
+                    'payment_account_ids': added_payment_account_ids
+                }
+            
+            # Determine overall success
+            all_success = all(step.get('success', False) for step in steps)
+            
+            return jsonify({
+                'success': all_success,
+                'workflow': workflow,
+                'steps': steps,
+                'summary': workflow_summary,
+                'timestamp': datetime.utcnow().isoformat()
+            }), 200
+        else:
+            return jsonify({'error': f'Unknown workflow: {workflow}'}), 400
+            
+    except Exception as e:
+        logger.error(f'Error running workflow: {e}')
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'steps': steps if 'steps' in locals() else []
+        }), 500
 
 
 if __name__ == '__main__':
